@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>네이버 SEO 경쟁 모니터링 — 바이오던스</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root {
   --bg:#f4f6fb; --white:#fff; --surface2:#f8f9fc; --border:#e3e8f0; --border2:#cdd5e5;
@@ -20,31 +21,30 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
 .app{max-width:1440px;margin:0 auto;padding:24px 20px 80px}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── TOPBAR ── */
+/* TOPBAR */
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .topbar h1{font-size:19px;font-weight:800;letter-spacing:-.4px}
 .topbar .sub{font-size:11px;color:var(--text-muted);margin-top:3px}
 
-/* ── PERIOD TABS ── */
+/* PERIOD TABS */
 .period-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 .period-tabs{display:flex;background:var(--white);border:1.5px solid var(--border);border-radius:30px;padding:3px;gap:2px;box-shadow:var(--shadow-sm)}
 .period-tab{font-size:12px;font-weight:600;padding:5px 16px;border-radius:20px;border:none;background:none;color:var(--text-muted);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
 .period-tab:hover{color:var(--text)}
 .period-tab.active{background:var(--bio);color:#fff}
 .date-nav-wrap{display:flex;align-items:center;gap:6px}
-.date-tabs{display:flex;gap:4px}
+.date-tabs{display:flex;gap:4px;flex-wrap:wrap;max-width:700px}
 .date-tab{font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text-muted);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
 .date-tab:hover{border-color:var(--bio);color:var(--bio)}
 .date-tab.active{background:var(--bio);color:#fff;border-color:var(--bio)}
 .nav-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .nav-btn:hover:not(:disabled){border-color:var(--bio);color:var(--bio)}
 .nav-btn:disabled{opacity:.3;cursor:default}
-
-/* ── COMPARE BADGE ── */
 .compare-select{font-size:12px;border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text-sub);background:var(--white);cursor:pointer;font-family:'Noto Sans KR',sans-serif}
 
-/* ── ALERT ── */
+/* ALERT */
 .alert-wrap{margin-bottom:16px}
 .alert-box{background:#fffbeb;border:1.5px solid #fbbf24;border-radius:var(--r);padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:6px}
 .alert-box.hidden{display:none}
@@ -54,36 +54,38 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .alert-chip{font-size:11px;background:#fff;border:1px solid #fcd34d;padding:2px 9px;border-radius:20px;color:#78350f;font-weight:600}
 .chip-delta{color:var(--red);margin-left:3px}
 
-/* ── INFO TOOLTIP ── */
+/* INFO TOOLTIP */
 .info-btn{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--text-faint);color:#fff;font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;position:relative;margin-left:4px}
 .info-btn:hover .info-popup{display:block}
-.info-popup{display:none;position:absolute;left:20px;top:-4px;background:var(--text);color:#fff;border-radius:8px;padding:9px 12px;font-size:11px;font-weight:400;white-space:nowrap;z-index:200;box-shadow:var(--shadow);min-width:220px;line-height:1.6;max-width:300px;white-space:normal}
+.info-popup{display:none;position:absolute;left:20px;top:-4px;background:var(--text);color:#fff;border-radius:8px;padding:9px 12px;font-size:11px;font-weight:400;z-index:200;box-shadow:var(--shadow);min-width:220px;line-height:1.6;max-width:300px;white-space:normal}
 .info-popup::before{content:'';position:absolute;left:-5px;top:8px;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-right:5px solid var(--text)}
 
-/* ── KPI GRID ── */
+/* KPI GRID */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:11px;margin-bottom:20px}
 .kpi-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
 .kpi-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
-.kpi-card.bio::after{background:var(--bio)}
-.kpi-card.med::after{background:var(--med)}
-.kpi-card.gap::after{background:var(--green)}
-.kpi-card.neutral::after{background:var(--text-muted)}
+.kpi-card.bio::after{background:var(--bio)} .kpi-card.med::after{background:var(--med)}
+.kpi-card.gap::after{background:var(--green)} .kpi-card.neutral::after{background:var(--text-muted)}
 .kpi-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;display:flex;align-items:center}
 .kpi-value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;line-height:1;margin-bottom:5px}
-.kpi-card.bio .kpi-value{color:var(--bio)}
-.kpi-card.med .kpi-value{color:var(--med)}
-.kpi-card.gap .kpi-value{color:var(--green)}
-.kpi-card.gap .kpi-value.negative{color:var(--red)}
+.kpi-card.bio .kpi-value{color:var(--bio)} .kpi-card.med .kpi-value{color:var(--med)}
+.kpi-card.gap .kpi-value{color:var(--green)} .kpi-card.gap .kpi-value.negative{color:var(--red)}
 .kpi-card.neutral .kpi-value{color:var(--text)}
 .kpi-sub{font-size:11px;color:var(--text-muted)}
 .kpi-trend{font-size:11px;font-weight:700;margin-top:4px}
 .kpi-trend.pos{color:var(--green)} .kpi-trend.neg{color:var(--red)} .kpi-trend.flat{color:var(--text-muted)}
 .kpi-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;margin-top:4px}
-.badge-warn{background:var(--orange-light);color:var(--orange)}
-.badge-good{background:var(--green-light);color:var(--green)}
-.no-data-overlay{position:absolute;inset:0;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;border-radius:var(--r);font-size:12px;color:var(--text-muted);font-weight:600;backdrop-filter:blur(2px)}
+.badge-warn{background:var(--orange-light);color:var(--orange)} .badge-good{background:var(--green-light);color:var(--green)}
 
-/* ── GAUGE ── */
+/* TREND CHART SECTION */
+.trend-section{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow-sm);margin-bottom:20px}
+.trend-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.trend-kw-select{font-size:12px;border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text-sub);background:var(--white);cursor:pointer;font-family:'Noto Sans KR',sans-serif;min-width:160px}
+.trend-tabs{display:flex;gap:5px}
+.trend-tab{font-size:11px;font-weight:600;padding:4px 12px;border-radius:16px;border:1.5px solid var(--border);background:var(--white);color:var(--text-muted);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.trend-tab.active{background:var(--bio);color:#fff;border-color:var(--bio)}
+
+/* GAUGE */
 .gauge-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:20px}
 .gauge-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-sm)}
 .gauge-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center}
@@ -94,13 +96,13 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .gauge-leg-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-sub)}
 .gauge-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 
-/* ── SECTION HEADER ── */
+/* SECTION HEADER */
 .sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px}
 .sec-title{font-size:12px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:6px}
 .sec-title::before{content:'';width:3px;height:13px;background:var(--bio);border-radius:2px}
 
-/* ── INTEL GRID ── */
-.intel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:11px;margin-bottom:20px}
+/* INTEL GRID */
+.intel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:20px}
 .intel-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:15px 17px;box-shadow:var(--shadow-sm)}
 .intel-hd{display:flex;align-items:flex-start;gap:9px;margin-bottom:11px}
 .intel-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
@@ -117,27 +119,22 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .val-blue{color:var(--bio)} .val-purple{color:var(--purple)}
 .intel-empty{font-size:12px;color:var(--text-muted);text-align:center;padding:14px;font-style:italic}
 
-/* ── 2×2 MATRIX ── */
+/* MATRIX */
 .matrix-wrap{margin-bottom:20px}
 .matrix{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .matrix-cell{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;position:relative}
 .matrix-cell .m-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.matrix-cell.tl .m-label{color:var(--green)} /* 바이오 진입 · 쿼리 높음 */
-.matrix-cell.tr .m-label{color:var(--red)}   /* 메디힐 독점 · 쿼리 높음 */
-.matrix-cell.bl .m-label{color:var(--text-muted)}  /* 바이오 진입 · 쿼리 낮음 */
-.matrix-cell.br .m-label{color:var(--orange)} /* 메디힐 독점 · 쿼리 낮음 */
-.matrix-cell .m-axis{position:absolute;font-size:9px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.matrix-cell.tl .m-label{color:var(--green)} .matrix-cell.tr .m-label{color:var(--red)}
+.matrix-cell.bl .m-label{color:var(--text-muted)} .matrix-cell.br .m-label{color:var(--orange)}
 .m-kw-chips{display:flex;flex-wrap:wrap;gap:4px}
 .m-chip{font-size:10px;padding:2px 8px;border-radius:12px;font-weight:600}
-.chip-green{background:var(--green-light);color:#065f46}
-.chip-red{background:var(--red-light);color:#991b1b}
-.chip-muted{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)}
-.chip-orange{background:var(--orange-light);color:#92400e}
+.chip-green{background:var(--green-light);color:#065f46} .chip-red{background:var(--red-light);color:#991b1b}
+.chip-muted{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)} .chip-orange{background:var(--orange-light);color:#92400e}
 .matrix-axis-x{text-align:center;font-size:10px;font-weight:700;color:var(--text-muted);margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
 .matrix-axis-y-wrap{display:flex;gap:8px;align-items:stretch}
 .matrix-axis-y{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;padding:0 2px}
 
-/* ── TABLE ── */
+/* TABLE */
 .table-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:20px}
 .table-toolbar{padding:12px 14px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface2)}
 .filter-tabs{display:flex;gap:5px;flex-wrap:wrap}
@@ -150,23 +147,16 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:820px}
 thead th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);border-bottom:1.5px solid var(--border);white-space:nowrap}
-thead th.sortable{cursor:pointer;user-select:none}
-thead th.sortable:hover{color:var(--bio)}
-thead th.sort-asc::after{content:' ↑';color:var(--bio)}
-thead th.sort-desc::after{content:' ↓';color:var(--bio)}
+thead th.sortable{cursor:pointer;user-select:none} thead th.sortable:hover{color:var(--bio)}
+thead th.sort-asc::after{content:' ↑';color:var(--bio)} thead th.sort-desc::after{content:' ↓';color:var(--bio)}
 thead th.right{text-align:right}
 tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
-tbody tr:last-child{border-bottom:none}
-tbody tr:hover{background:#f6f8fd}
-tbody td{padding:9px 12px;vertical-align:middle}
-tbody td.right{text-align:right}
-
+tbody tr:last-child{border-bottom:none} tbody tr:hover{background:#f6f8fd}
+tbody td{padding:9px 12px;vertical-align:middle} tbody td.right{text-align:right}
 .kw-name{font-weight:600;font-size:13px;color:var(--text)}
 .kw-meta{font-size:10px;color:var(--text-muted);margin-top:2px;display:flex;gap:7px;flex-wrap:wrap}
 .p-tag{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:700}
-.p-required{background:#dbeafe;color:#1e40af}
-.p-2nd{background:#ede9fe;color:#5b21b6}
-.p-linked{background:#d1fae5;color:#065f46}
+.p-required{background:#dbeafe;color:#1e40af} .p-2nd{background:#ede9fe;color:#5b21b6} .p-linked{background:#d1fae5;color:#065f46}
 .bar-cell{min-width:140px}
 .bar-wrap{display:flex;align-items:center;gap:6px}
 .bar-track{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
@@ -176,15 +166,11 @@ tbody td.right{text-align:right}
 .pct-bio{color:var(--bio)} .pct-med{color:var(--med)} .pct-zero{color:var(--text-faint)}
 .cnt-sub{font-size:10px;color:var(--text-muted);margin-top:1px}
 .gap-pill{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}
-.gap-pos{background:var(--green-light);color:var(--green)}
-.gap-neg{background:var(--red-light);color:var(--red)}
-.gap-zero{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)}
+.gap-pos{background:var(--green-light);color:var(--green)} .gap-neg{background:var(--red-light);color:var(--red)} .gap-zero{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)}
 .delta-b{display:inline-block;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;padding:1px 5px;border-radius:5px}
-.d-up{background:var(--red-light);color:var(--red)}
-.d-dn{background:var(--green-light);color:var(--green)}
-.d-flat{background:var(--surface2);color:var(--text-muted)}
+.d-up{background:var(--red-light);color:var(--red)} .d-dn{background:var(--green-light);color:var(--green)} .d-flat{background:var(--surface2);color:var(--text-muted)}
 
-/* ── STACKED BAR SECTION ── */
+/* STACKED */
 .stacked-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:20px}
 .stacked-row{display:flex;align-items:center;gap:9px;margin-bottom:8px}
 .stacked-kw{font-size:11px;min-width:155px;color:var(--text-sub);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -193,47 +179,63 @@ tbody td.right{text-align:right}
 .stacked-seg:hover{filter:brightness(.88)}
 .stacked-total{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);min-width:26px;text-align:right}
 
-/* ── EMPTY STATE ── */
+/* EMPTY / TOOLTIP */
 .empty-state{background:var(--white);border:1.5px dashed var(--border);border-radius:var(--r);padding:40px 20px;text-align:center;color:var(--text-muted);margin-bottom:20px}
 .empty-state .e-icon{font-size:32px;margin-bottom:10px}
 .empty-state .e-title{font-weight:700;font-size:14px;margin-bottom:5px}
 .empty-state .e-desc{font-size:12px;line-height:1.6}
-
-/* ── TOOLTIP ── */
 .tooltip{position:fixed;background:var(--text);color:#fff;border-radius:8px;padding:7px 11px;font-size:12px;pointer-events:none;z-index:9999;display:none;box-shadow:var(--shadow);max-width:220px}
 .tooltip.show{display:block}
-.tt-brand{font-weight:700;margin-bottom:2px}
-.tt-val{opacity:.75;font-size:11px}
+.tt-brand{font-weight:700;margin-bottom:2px} .tt-val{opacity:.75;font-size:11px}
 
-/* ── LEGEND ── */
+/* LEGEND */
 .legend{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
 .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text-sub)}
 .l-dot{width:8px;height:8px;border-radius:50%}
 
+/* DATA INFO BADGE */
+.data-info{font-size:11px;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;display:inline-flex;align-items:center;gap:5px}
+.data-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+
+@media(max-width:1024px){.intel-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){.gauge-grid{grid-template-columns:1fr}.intel-grid{grid-template-columns:1fr}.matrix{grid-template-columns:1fr}.stacked-kw{min-width:100px}}
 </style>
 </head>
 <body>
 <div class="app">
 
-<!-- TOPBAR -->
+<div id="loadingState" style="display:flex;align-items:center;justify-content:center;min-height:60vh">
+  <div style="text-align:center">
+    <div style="font-size:32px;margin-bottom:14px;animation:spin 1s linear infinite;display:inline-block">⟳</div>
+    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">구글 시트에서 데이터 불러오는 중...</div>
+    <div style="font-size:12px;color:var(--text-muted)">All_Raw 시트 연결 중 · 전체 히스토리 파싱</div>
+  </div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<div id="mainContent" style="display:none">
+
 <div class="topbar">
   <div>
     <h1>📊 네이버 SEO 경쟁 모니터링</h1>
-    <div class="sub">블로그 상위 100개 콘텐츠 내 브랜드 노출 수 기준 · 매일 오전 10시 업데이트</div>
+    <div class="sub">블로그/카페 상위 100개 콘텐츠 내 브랜드 노출 수 기준 · All_Raw 시트 직접 연동</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span class="data-info"><span class="data-dot"></span><span id="dataInfoTxt">로딩 중...</span></span>
+    <button onclick="loadSheetData()" style="font-size:12px;font-weight:600;padding:7px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);color:var(--text-sub);cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Noto Sans KR',sans-serif;box-shadow:var(--shadow-sm)">🔄 새로고침</button>
   </div>
 </div>
 
-<!-- PERIOD + DATE NAV -->
 <div class="period-bar">
   <div class="period-tabs">
     <button class="period-tab active" onclick="setPeriod('daily',this)">일별</button>
     <button class="period-tab" onclick="setPeriod('7d',this)">최근 7일</button>
     <button class="period-tab" onclick="setPeriod('30d',this)">최근 30일</button>
+    <button class="period-tab" onclick="setPeriod('all',this)">전체 평균</button>
   </div>
   <div class="date-nav-wrap" id="dateNavWrap">
-    <div class="date-tabs" id="dateTabs"></div>
     <button class="nav-btn" id="prevBtn" onclick="changeDate(-1)">‹</button>
+    <div class="date-tabs" id="dateTabs"></div>
     <button class="nav-btn" id="nextBtn" onclick="changeDate(1)">›</button>
   </div>
   <select class="compare-select" id="compareSelect" onchange="render()">
@@ -243,7 +245,6 @@ tbody td.right{text-align:right}
   </select>
 </div>
 
-<!-- ALERTS -->
 <div class="alert-wrap">
   <div class="alert-box hidden" id="alertDay">
     <div class="alert-icon">⚠️</div>
@@ -261,7 +262,6 @@ tbody td.right{text-align:right}
   </div>
 </div>
 
-<!-- LEGEND -->
 <div class="legend">
   <div class="legend-item"><div class="l-dot" style="background:var(--bio)"></div>바이오던스 (우리)</div>
   <div class="legend-item"><div class="l-dot" style="background:var(--med)"></div>메디힐 (주요 경쟁사)</div>
@@ -270,33 +270,47 @@ tbody td.right{text-align:right}
   <div class="legend-item"><div class="l-dot" style="background:var(--text-faint)"></div>기타</div>
 </div>
 
-<!-- KPI -->
 <div class="kpi-grid" id="kpiGrid"></div>
 
-<!-- WEIGHTED GAUGE -->
+<!-- ▼ 히스토리 트렌드 차트 (신규) -->
 <div class="sec-hd">
+  <div class="sec-title">점유율 추이 (히스토리)
+    <span class="info-btn">?<span class="info-popup">All_Raw 시트의 전체 날짜 데이터를 기반으로 바이오던스·메디힐·아로셀·웰더마의 일별 점유율 추이를 표시합니다. 키워드를 선택하면 해당 키워드 단독 추이로 전환됩니다.</span></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="trend-tabs">
+      <button class="trend-tab active" onclick="setTrendView('overall',this)">전체</button>
+      <button class="trend-tab" onclick="setTrendView('kw',this)">키워드별</button>
+    </div>
+    <select class="trend-kw-select" id="trendKwSelect" onchange="drawTrendChart()" style="display:none"></select>
+  </div>
+</div>
+<div class="trend-section" style="padding:16px 18px">
+  <div style="position:relative;height:260px">
+    <canvas id="trendChart" role="img" aria-label="바이오던스 vs 메디힐 점유율 히스토리 트렌드 차트"></canvas>
+  </div>
+</div>
+
+<div class="sec-hd" style="margin-top:20px">
   <div class="sec-title">쿼리량 가중 점유율
-    <span class="info-btn">?<span class="info-popup">노출수 ÷ 해당 키워드 전체 노출수 × 쿼리량으로 산정합니다.<br>검색량이 많은 키워드(예: 마스크팩 49,800)에서의 점유가 더 크게 반영되어, 실제 소비자 도달 관점에서의 상대적 영향력을 보여줍니다.</span></span>
+    <span class="info-btn">?<span class="info-popup">노출수 ÷ 해당 키워드 전체 노출수 × 쿼리량으로 산정합니다.</span></span>
   </div>
 </div>
 <div class="gauge-grid" id="gaugeGrid"></div>
 
-<!-- INTEL CARDS -->
 <div class="sec-hd"><div class="sec-title">경쟁 인텔리전스</div></div>
 <div class="intel-grid" id="intelGrid"></div>
 
-<!-- 2×2 KEYWORD MATRIX -->
 <div class="sec-hd">
   <div class="sec-title">바이오던스 진입 키워드 현황
-    <span class="info-btn">?<span class="info-popup">키워드를 쿼리량(검색 수요)과 바이오던스 진입 여부로 분류한 2×2 매트릭스입니다.<br><br>✅ 진입 완료·고쿼리 → 현재 우위 유지 필요<br>🚨 미진입·고쿼리 → 최우선 공략 필요<br>💬 진입 완료·저쿼리 → 점유율 확대 모니터링<br>⚠️ 미진입·저쿼리 → 중장기 검토</span></span>
+    <span class="info-btn">?<span class="info-popup">키워드를 쿼리량(검색 수요)과 바이오던스 진입 여부로 분류한 2×2 매트릭스입니다.</span></span>
   </div>
 </div>
 <div class="matrix-wrap" id="matrixWrap"></div>
 
-<!-- KEYWORD TABLE -->
 <div class="sec-hd">
   <div class="sec-title">키워드별 점유율 상세
-    <span class="info-btn">?<span class="info-popup">각 키워드에서 상위 100개 블로그 콘텐츠 내 브랜드가 몇 개 노출됐는지 집계합니다.<br><br>• 점유율 = 해당 브랜드 노출수 ÷ 전체 브랜드 노출수<br>• 가중점수 = 점유율 × 쿼리량 (쿼리량 미등록 키워드는 —)<br>• 격차 = 바이오던스 점유율 — 메디힐 점유율</span></span>
+    <span class="info-btn">?<span class="info-popup">각 키워드에서 브랜드별 노출 수 및 점유율을 표시합니다.</span></span>
   </div>
   <div class="filter-tabs" id="filterTabs"></div>
 </div>
@@ -306,17 +320,11 @@ tbody td.right{text-align:right}
       <thead>
         <tr>
           <th class="sortable" data-col="kw" onclick="sortBy('kw')">키워드</th>
-          <th class="right sortable" data-col="qv" onclick="sortBy('qv')">쿼리량
-            <span class="info-btn" style="font-size:8px">?<span class="info-popup">네이버 검색광고 기준 월 검색량(30일)입니다. 쿼리량이 높을수록 소비자 도달 기회가 큽니다.</span></span>
-          </th>
-          <th class="right sortable" data-col="wScore" onclick="sortBy('wScore')">가중점수
-            <span class="info-btn" style="font-size:8px">?<span class="info-popup">바이오던스 점유율 × 쿼리량으로 산정합니다. 쿼리량이 높은 키워드에서의 점유가 더 크게 반영되어 실제 소비자 도달 영향력을 나타냅니다.</span></span>
-          </th>
+          <th class="right sortable" data-col="qv" onclick="sortBy('qv')">쿼리량</th>
+          <th class="right sortable" data-col="wScore" onclick="sortBy('wScore')">가중점수</th>
           <th class="bar-cell sortable" data-col="bioPct" onclick="sortBy('bioPct')">바이오던스</th>
           <th class="bar-cell sortable" data-col="medPct" onclick="sortBy('medPct')">메디힐</th>
-          <th class="right sortable" data-col="gap" onclick="sortBy('gap')">격차(바이오-메디힐)
-            <span class="info-btn" style="font-size:8px">?<span class="info-popup">바이오던스 점유율 — 메디힐 점유율입니다.<br>양수(+) = 바이오던스 우세<br>음수(−) = 메디힐 우세</span></span>
-          </th>
+          <th class="right sortable" data-col="gap" onclick="sortBy('gap')">격차(바이오-메디힐)</th>
           <th class="right sortable" data-col="total" onclick="sortBy('total')">전체</th>
           <th class="right">전일비</th>
         </tr>
@@ -326,19 +334,23 @@ tbody td.right{text-align:right}
   </div>
 </div>
 
-<!-- STACKED BRAND BAR -->
 <div class="sec-hd">
   <div class="sec-title">전체 브랜드 점유 현황 (키워드별)
-    <span class="info-btn">?<span class="info-popup">키워드별로 모든 브랜드의 노출 수를 스택 바로 표시합니다. 바에 마우스를 올리면 브랜드명과 노출 수를 확인할 수 있습니다. 막대 길이는 전체 키워드 중 콘텐츠 수가 가장 많은 키워드를 기준으로 정규화됩니다.</span></span>
+    <span class="info-btn">?<span class="info-popup">키워드별로 모든 브랜드의 노출 수를 스택 바로 표시합니다.</span></span>
   </div>
 </div>
 <div class="stacked-card" id="stackedCard"></div>
 
-</div>
+</div><!-- /mainContent -->
+</div><!-- /app -->
 <div class="tooltip" id="tooltip"><div class="tt-brand" id="tt-b"></div><div class="tt-val" id="tt-v"></div></div>
 
 <script>
-// ═══════════════ DATA ═══════════════
+// ═══════════════ CONFIG ═══════════════
+const SHEET_ID = '1BuPAP7_QQEtUQaTMucoDO3cTA6Im6apVtX2HiQiBkI8';
+const SHEET_GID = '1470717201'; // All_Raw 시트
+const BRANDS_ORDER = ['메디힐','웰더마','바이오던스','아로셀','더마픽스','달바','아비브','라네즈','이옴','포들','VT','넘버즈인','아이소이','토리든','러븀','에스트라','마몽드','비건이펙트','가쉬','셀리맥스','메노킨','빈느','하우스오브비','프롬더스킨'];
+
 const QV = {
   '마스크팩':49800,'콜라겐마스크팩':15970,'콜라겐팩':9270,'팩':5240,'겔마스크팩':4580,
   '올리브영마스크팩':3850,'수면팩':2770,'마스크팩추천':2830,'콜라겐마스크':2130,
@@ -351,23 +363,103 @@ const QV = {
   '올리브영추천템':10260,
 };
 
-const RAW = {
-  "2026-04-28":{"콜라겐팩추천":{"메디힐":8,"바이오던스":10,"아로셀":4,"더마픽스":2},"올리브영콜라겐팩":{"메디힐":12,"웰더마":5,"바이오던스":1,"더마픽스":6},"콜라겐겔마스크":{"메디힐":7,"웰더마":9,"아로셀":3,"아비브":1},"올리브영마스크팩1위":{"메디힐":12,"웰더마":1,"아로셀":1,"더마픽스":2,"달바":1,"토리든":1,"러븀":1,"하우스오브비":1}},
-  "2026-04-29":{"콜라겐팩추천":{"메디힐":8,"바이오던스":10,"아로셀":4,"더마픽스":2},"올리브영콜라겐팩":{"메디힐":12,"웰더마":5,"바이오던스":1,"더마픽스":6},"콜라겐겔마스크":{"메디힐":7,"웰더마":10,"아로셀":3,"아비브":1},"올리브영마스크팩추천":{"메디힐":9,"웰더마":4,"바이오던스":2,"아로셀":4,"아이소이":2},"올리브영마스크팩1위":{"메디힐":12,"웰더마":1,"아로셀":1,"더마픽스":2,"달바":1,"토리든":1,"러븀":1,"하우스오브비":1},"올리브영마스크팩순위":{"메디힐":16,"웰더마":1,"아로셀":1,"넘버즈인":1},"올리브영마스크팩":{"메디힐":10,"바이오던스":2,"아로셀":2,"더마픽스":1,"아비브":1,"아이소이":2},"콜라겐마스크팩":{"메디힐":2,"바이오던스":4,"아로셀":9,"아비브":1},"콜라겐마스크":{"메디힐":2,"바이오던스":4,"아로셀":8,"아비브":2},"겔마스크팩":{"메디힐":7,"웰더마":1,"바이오던스":2,"아로셀":1,"아비브":1,"포들":2,"아이소이":2},"소이현 마스크팩":{"바이오던스":6,"아로셀":6,"달바":1,"넘버즈인":2},"콜라겐팩":{"메디힐":1,"바이오던스":11,"더마픽스":2},"올리브영팩추천":{"메디힐":8,"바이오던스":1,"아로셀":2,"달바":1,"아비브":1,"아이소이":1},"슬리핑마스크":{"라네즈":10,"VT":2,"아이소이":1},"소이현 홈쇼핑":{"바이오던스":5,"아로셀":8},"겔마스크추천":{"메디힐":4,"웰더마":2,"아로셀":2,"달바":1,"아비브":1,"아이소이":2,"러븀":1},"마스크팩":{"메디힐":2,"바이오던스":4,"아로셀":1,"이옴":3,"넘버즈인":1,"하우스오브비":1},"콜라겐마스크팩추천":{"메디힐":3,"웰더마":1,"바이오던스":1,"아로셀":6},"마스크팩추천":{"메디힐":5,"아로셀":4,"넘버즈인":1,"아이소이":1},"겔마스크":{"메디힐":6,"바이오던스":2,"아이소이":1},"하이드로겔마스크팩":{"메디힐":1,"달바":3,"이옴":1,"포들":2},"올리브영수분크림":{"메디힐":3,"넘버즈인":1,"아이소이":2,"토리든":1},"올리브영세럼추천":{"메디힐":3,"넘버즈인":1,"아이소이":3},"수분세럼":{"메디힐":1,"넘버즈인":2,"토리든":3},"수분마스크팩":{"메디힐":6},"수면팩":{"아로셀":6},"팩":{"메디힐":1,"바이오던스":2,"이옴":1,"메노킨":1},"올리브영추천템":{"메디힐":3,"VT":2},"수분앰플":{"메디힐":1,"에스트라":2,"마몽드":2},"수면마스크":{"아로셀":3,"달바":1,"포들":1},"모공세럼":{"메디힐":4,"에스트라":1},"하이드로겔":{"메디힐":1,"바이오던스":1,"더마픽스":1,"달바":1},"세럼추천":{"메디힐":1,"아비브":1,"넘버즈인":1,"토리든":1},"올리브영세럼":{"메디힐":1,"아비브":1,"라네즈":1},"CJ온스타일 홈쇼핑":{"바이오던스":1,"VT":1},"올리브영크림추천":{"메디힐":1,"넘버즈인":1},"올리브영크림":{"넘버즈인":1,"에스트라":1},"슬리핑팩":{"라네즈":1,"VT":1},"소이현":{"바이오던스":2},"세럼":{"메디힐":2},"모공팩":{"이옴":2},"cj홈쇼핑":{"바이오던스":1},"cj온스타일":{"바이오던스":1},"홈쇼핑 사전주문":{"바이오던스":1},"앰플":{"메디힐":1}},
-  "2026-04-30":{"콜라겐팩추천":{"메디힐":8,"바이오던스":14,"아로셀":2,"더마픽스":2},"올리브영콜라겐팩":{"메디힐":12,"웰더마":5,"바이오던스":1,"더마픽스":6},"콜라겐겔마스크":{"메디힐":8,"웰더마":11,"아로셀":3,"아비브":1},"올리브영마스크팩추천":{"메디힐":10,"웰더마":4,"바이오던스":2,"아로셀":3,"아이소이":2},"올리브영마스크팩순위":{"메디힐":16,"웰더마":1,"아로셀":1,"넘버즈인":1},"올리브영마스크팩1위":{"메디힐":12,"웰더마":1,"아로셀":1,"더마픽스":1,"달바":1,"토리든":1,"러븀":1,"하우스오브비":1},"올리브영마스크팩":{"메디힐":10,"바이오던스":2,"아로셀":1,"더마픽스":1,"아비브":1,"아이소이":2},"콜라겐마스크팩":{"메디힐":3,"바이오던스":4,"아로셀":8,"아비브":1},"겔마스크팩":{"메디힐":7,"바이오던스":2,"아로셀":2,"아비브":1,"포들":2,"아이소이":2},"콜라겐마스크":{"메디힐":3,"바이오던스":4,"아로셀":6,"아비브":2},"소이현 마스크팩":{"바이오던스":6,"아로셀":6,"달바":1,"넘버즈인":2},"콜라겐팩":{"메디힐":1,"바이오던스":11,"아로셀":1,"더마픽스":1},"슬리핑마스크":{"라네즈":11,"VT":2,"아이소이":1},"겔마스크추천":{"메디힐":4,"웰더마":2,"아로셀":3,"달바":1,"아비브":1,"아이소이":2,"러븀":1},"올리브영팩추천":{"메디힐":8,"바이오던스":1,"아로셀":1,"달바":1,"아비브":1,"아이소이":1},"소이현 홈쇼핑":{"바이오던스":5,"아로셀":8},"마스크팩추천":{"메디힐":5,"아로셀":5,"넘버즈인":1,"아이소이":1},"마스크팩":{"메디힐":3,"바이오던스":3,"아로셀":1,"이옴":3,"넘버즈인":1,"하우스오브비":1},"콜라겐마스크팩추천":{"메디힐":4,"웰더마":1,"바이오던스":1,"아로셀":5},"겔마스크":{"메디힐":6,"바이오던스":2,"아이소이":1},"하이드로겔마스크팩":{"메디힐":1,"달바":3,"이옴":1,"포들":2},"올리브영세럼추천":{"메디힐":3,"넘버즈인":1,"아이소이":3},"올리브영수분크림":{"메디힐":2,"넘버즈인":1,"아이소이":2,"토리든":1},"수분마스크팩":{"메디힐":6},"모공세럼":{"메디힐":5,"에스트라":1},"하이드로겔":{"메디힐":1,"바이오던스":1,"더마픽스":1,"달바":2},"팩":{"메디힐":1,"바이오던스":2,"이옴":1,"메노킨":1},"올리브영추천템":{"메디힐":3,"VT":2},"수분세럼":{"메디힐":1,"넘버즈인":2,"토리든":2},"수면팩":{"아로셀":5},"수면마스크":{"아로셀":3,"달바":1,"포들":1},"올리브영세럼":{"메디힐":1,"아비브":2,"라네즈":1},"수분앰플":{"메디힐":1,"에스트라":1,"마몽드":2},"세럼추천":{"메디힐":1,"아비브":1,"넘버즈인":1,"토리든":1},"세럼":{"메디힐":3},"올리브영크림추천":{"메디힐":1,"넘버즈인":1},"올리브영크림":{"넘버즈인":1,"에스트라":1},"슬리핑팩":{"라네즈":1,"VT":1},"소이현":{"바이오던스":2},"모공팩":{"이옴":2},"CJ온스타일 홈쇼핑":{"바이오던스":1},"cj온스타일":{"바이오던스":1},"홈쇼핑 사전주문":{"바이오던스":1},"앰플":{"메디힐":1}}
-};
-
-const BRAND_CLR = {'메디힐':'#dc2626','바이오던스':'#1a56db','아로셀':'#d97706','웰더마':'#6366f1','더마픽스':'#7c3aed','달바':'#db2777','아비브':'#059669','라네즈':'#ca8a04','이옴':'#ea580c','포들':'#0891b2','VT':'#94a3b8','넘버즈인':'#9333ea','아이소이':'#4f46e5','토리든':'#7c3aed','러븀':'#06b6d4','에스트라':'#db2777','마몽드':'#65a30d','메노킨':'#b91c1c','빈느':'#10b981','하우스오브비':'#2563eb','기타':'#cbd5e1'};
-const getPriority = kw => ({'마스크팩':'필수','콜라겐마스크팩':'필수','팩':'필수','올리브영마스크팩':'필수','올리브영콜라겐팩':'필수','겔마스크팩':'2순위','마스크팩추천':'2순위','콜라겐마스크':'2순위','겔마스크':'2순위','올리브영마스크팩추천':'2순위','콜라겐팩추천':'2순위','겔마스크추천':'2순위','콜라겐팩':'연계','콜라겐팩추천':'연계'})[kw];
-const clr = b => BRAND_CLR[b] || '#94a3b8';
-
-const DATES = Object.keys(RAW).sort();
-let cDateIdx = DATES.length - 1;
+let RAW = {};
+let DATES = [];
+let cDateIdx = 0;
 let cPeriod = 'daily';
 let cFilter = 'all';
 let cSort = 'qv'; let cSortDir = 'desc';
+let trendView = 'overall';
+let trendChart = null;
 
-// ═══════════════ PROCESS ═══════════════
+const BRAND_CLR = {
+  '메디힐':'#dc2626','바이오던스':'#1a56db','아로셀':'#d97706','웰더마':'#6366f1',
+  '더마픽스':'#7c3aed','달바':'#db2777','아비브':'#059669','라네즈':'#ca8a04',
+  '이옴':'#ea580c','포들':'#0891b2','VT':'#94a3b8','넘버즈인':'#9333ea',
+  '아이소이':'#4f46e5','토리든':'#7c3aed','러븀':'#06b6d4','에스트라':'#db2777',
+  '마몽드':'#65a30d','메노킨':'#b91c1c','빈느':'#10b981','하우스오브비':'#2563eb','기타':'#cbd5e1'
+};
+const getPriority = kw => ({'마스크팩':'필수','콜라겐마스크팩':'필수','팩':'필수','올리브영마스크팩':'필수','올리브영콜라겐팩':'필수','겔마스크팩':'2순위','마스크팩추천':'2순위','콜라겐마스크':'2순위','겔마스크':'2순위','올리브영마스크팩추천':'2순위','콜라겐팩추천':'2순위','겔마스크추천':'2순위','콜라겐팩':'연계','콜라겐팩추천':'연계'})[kw];
+const clr = b => BRAND_CLR[b] || '#94a3b8';
+
+// ═══════════════ SHEET FETCH ═══════════════
+function parseCSV(text) {
+  const lines = text.split('\n');
+  const result = {};
+  lines.slice(2).forEach(line => {
+    if (!line.trim()) return;
+    const cells = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"' && !inQ) { inQ = true; }
+      else if (line[i] === '"' && inQ) { inQ = false; }
+      else if (line[i] === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
+      else { cur += line[i]; }
+    }
+    cells.push(cur.trim());
+    const date = cells[0];
+    const kw = cells[1];
+    if (!date || !date.match(/^\d{4}-\d{2}-\d{2}$/) || !kw) return;
+    if (!result[date]) result[date] = {};
+    if (!result[date][kw]) result[date][kw] = {};
+    BRANDS_ORDER.forEach((brand, i) => {
+      const raw = (cells[i + 2] || '').replace(/"/g, '').trim();
+      if (raw && !raw.startsWith('#') && raw !== '') {
+        const n = parseInt(raw);
+        if (!isNaN(n) && n > 0) result[date][kw][brand] = n;
+      }
+    });
+  });
+  return result;
+}
+
+async function loadSheetData() {
+  showLoading(true);
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    RAW = parseCSV(text);
+    DATES = Object.keys(RAW).sort();
+    if (!DATES.length) throw new Error('데이터 없음');
+    cDateIdx = DATES.length - 1;
+    // 데이터 정보 표시
+    document.getElementById('dataInfoTxt').textContent =
+      `${DATES.length}일치 데이터 · ${DATES[0].slice(5)} ~ ${DATES[DATES.length-1].slice(5)} · All_Raw 연동`;
+    // 트렌드 키워드 셀렉트 채우기
+    populateTrendKwSelect();
+    showLoading(false);
+    render();
+  } catch (e) {
+    showLoading(false);
+    showError(`시트 불러오기 실패: ${e.message}<br><br>해결 방법:<br>1. 시트 공유 설정 → "링크가 있는 모든 사용자" → 뷰어<br>2. 아래 버튼으로 재시도`);
+  }
+}
+
+function populateTrendKwSelect() {
+  const allKws = new Set(DATES.flatMap(d => Object.keys(RAW[d])));
+  const sel = document.getElementById('trendKwSelect');
+  sel.innerHTML = [...allKws].sort().map(k => `<option value="${k}">${k}</option>`).join('');
+}
+
+function showLoading(on) {
+  document.getElementById('loadingState').style.display = on ? 'flex' : 'none';
+  document.getElementById('mainContent').style.display = on ? 'none' : 'block';
+}
+
+function showError(msg) {
+  document.getElementById('loadingState').innerHTML = `
+    <div style="text-align:center;padding:60px 20px;max-width:500px">
+      <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+      <div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:6px">데이터 로드 실패</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8;text-align:left;background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px">${msg}</div>
+      <button onclick="loadSheetData()" style="padding:8px 20px;background:var(--bio);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Noto Sans KR',sans-serif">다시 시도</button>
+    </div>`;
+  document.getElementById('loadingState').style.display = 'flex';
+}
+
+// ═══════════════ DATA PROCESSING ═══════════════
 function processRows(dateData) {
   return Object.entries(dateData).map(([kw, brands]) => {
     const total = Object.values(brands).reduce((a,b)=>a+b, 0);
@@ -376,26 +468,26 @@ function processRows(dateData) {
     const qv = QV[kw] || 0;
     const bioPct = total > 0 ? Math.round(bio/total*100) : 0;
     const medPct = total > 0 ? Math.round(med/total*100) : 0;
-    // 가중점수 = (바이오던스 점유율) × 쿼리량
     const wScore = qv > 0 && total > 0 ? Math.round((bio/total) * qv) : 0;
-    return { kw, total, bio, med, bioPct, medPct,
-      gap: bioPct - medPct,  // 바이오던스 - 메디힐
-      qv, wScore, brands };
+    return { kw, total, bio, med, bioPct, medPct, gap: bioPct - medPct, qv, wScore, brands };
   });
 }
 
-function avg7dRows() {
-  // Average of all available dates (in lieu of real 7d data)
-  const allKws = new Set(DATES.flatMap(d => Object.keys(RAW[d])));
+// 진짜 N일 윈도우 평균
+function avgNdRows(n) {
+  // 현재 선택된 날짜 기준으로 최근 N일
+  const endIdx = cDateIdx;
+  const startIdx = Math.max(0, endIdx - n + 1);
+  const windowDates = DATES.slice(startIdx, endIdx + 1);
+  const allKws = new Set(windowDates.flatMap(d => Object.keys(RAW[d])));
   const result = [];
   allKws.forEach(kw => {
-    const days = DATES.filter(d => RAW[d][kw]);
+    const days = windowDates.filter(d => RAW[d][kw]);
     if (!days.length) return;
     const sumBrands = {};
     days.forEach(d => {
       Object.entries(RAW[d][kw]).forEach(([b,v]) => { sumBrands[b] = (sumBrands[b]||0)+v; });
     });
-    // Average
     const avgBrands = Object.fromEntries(Object.entries(sumBrands).map(([b,v])=>[b, v/days.length]));
     const total = Object.values(avgBrands).reduce((a,b)=>a+b,0);
     const bio = avgBrands['바이오던스'] || 0;
@@ -405,15 +497,19 @@ function avg7dRows() {
     const medPct = total > 0 ? Math.round(med/total*100) : 0;
     const wScore = qv > 0 && total > 0 ? Math.round((bio/total)*qv) : 0;
     result.push({ kw, total: Math.round(total), bio: Math.round(bio), med: Math.round(med),
-      bioPct, medPct, gap: bioPct-medPct, qv, wScore, brands: Object.fromEntries(Object.entries(avgBrands).map(([b,v])=>[b,Math.round(v)])) });
+      bioPct, medPct, gap: bioPct-medPct, qv, wScore,
+      brands: Object.fromEntries(Object.entries(avgBrands).map(([b,v])=>[b,Math.round(v)])),
+      daysUsed: days.length });
   });
   return result;
 }
 
 function getRows() {
-  if (cPeriod === 'daily') return processRows(RAW[DATES[cDateIdx]]);
-  if (cPeriod === '7d') return avg7dRows();
-  if (cPeriod === '30d') return avg7dRows(); // same data structure, would extend with more dates
+  if (!DATES.length) return [];
+  if (cPeriod === 'daily') return processRows(RAW[DATES[cDateIdx]] || {});
+  if (cPeriod === '7d') return avgNdRows(7);
+  if (cPeriod === '30d') return avgNdRows(30);
+  if (cPeriod === 'all') return avgNdRows(DATES.length);
   return [];
 }
 
@@ -425,9 +521,33 @@ function getPrevRows() {
     return null;
   }
   if (cmp === 'prev_7d') {
-    // Use available earlier date as proxy
-    if (cDateIdx > 0) return processRows(RAW[DATES[0]]);
-    return null;
+    // 현재 선택 날짜보다 7일 전 윈도우로 평균
+    const endIdx = Math.max(0, cDateIdx - 7);
+    const startIdx = Math.max(0, endIdx - 6);
+    const windowDates = DATES.slice(startIdx, endIdx + 1);
+    if (!windowDates.length) return null;
+    const allKws = new Set(windowDates.flatMap(d => Object.keys(RAW[d])));
+    const result = [];
+    allKws.forEach(kw => {
+      const days = windowDates.filter(d => RAW[d][kw]);
+      if (!days.length) return;
+      const sumBrands = {};
+      days.forEach(d => {
+        Object.entries(RAW[d][kw]).forEach(([b,v]) => { sumBrands[b] = (sumBrands[b]||0)+v; });
+      });
+      const avgBrands = Object.fromEntries(Object.entries(sumBrands).map(([b,v])=>[b, v/days.length]));
+      const total = Object.values(avgBrands).reduce((a,b)=>a+b,0);
+      const bio = avgBrands['바이오던스'] || 0;
+      const med = avgBrands['메디힐'] || 0;
+      const qv = QV[kw] || 0;
+      const bioPct = total > 0 ? Math.round(bio/total*100) : 0;
+      const medPct = total > 0 ? Math.round(med/total*100) : 0;
+      const wScore = qv > 0 && total > 0 ? Math.round((bio/total)*qv) : 0;
+      result.push({ kw, total: Math.round(total), bio: Math.round(bio), med: Math.round(med),
+        bioPct, medPct, gap: bioPct-medPct, qv, wScore,
+        brands: Object.fromEntries(Object.entries(avgBrands).map(([b,v])=>[b,Math.round(v)])) });
+    });
+    return result;
   }
   return null;
 }
@@ -438,10 +558,17 @@ function buildDateNav() {
   const tabs = document.getElementById('dateTabs');
   if (cPeriod !== 'daily') { wrap.style.display='none'; return; }
   wrap.style.display='flex';
-  tabs.innerHTML = DATES.map((d,i)=>`<button class="date-tab ${i===cDateIdx?'active':''}" onclick="goDate(${i})">${d.slice(5)}</button>`).join('');
+  // 최대 10개 탭 표시 (최신 기준)
+  const maxTabs = 10;
+  const start = Math.max(0, DATES.length - maxTabs);
+  tabs.innerHTML = DATES.slice(start).map((d,i)=>{
+    const realIdx = start + i;
+    return `<button class="date-tab ${realIdx===cDateIdx?'active':''}" onclick="goDate(${realIdx})">${d.slice(5)}</button>`;
+  }).join('');
   document.getElementById('prevBtn').disabled = cDateIdx <= 0;
   document.getElementById('nextBtn').disabled = cDateIdx >= DATES.length-1;
 }
+
 function goDate(i){ cDateIdx=i; render(); }
 function changeDate(d){ const n=cDateIdx+d; if(n>=0&&n<DATES.length){cDateIdx=n;render();} }
 function setPeriod(p,btn){
@@ -451,40 +578,143 @@ function setPeriod(p,btn){
   render();
 }
 
+// ═══════════════ TREND CHART ═══════════════
+function setTrendView(v, btn) {
+  trendView = v;
+  document.querySelectorAll('.trend-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('trendKwSelect').style.display = v==='kw' ? 'block' : 'none';
+  drawTrendChart();
+}
+
+function drawTrendChart() {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
+
+  const labels = DATES.map(d => d.slice(5));
+
+  if (trendView === 'overall') {
+    // 전체 날짜별 바이오던스/메디힐/아로셀/웰더마 점유율
+    const bioData=[], medData=[], aroData=[], welData=[];
+    DATES.forEach(d => {
+      let tAll=0, tBio=0, tMed=0, tAro=0, tWel=0;
+      Object.values(RAW[d]).forEach(brands => {
+        const tot = Object.values(brands).reduce((a,b)=>a+b,0);
+        tAll += tot;
+        tBio += brands['바이오던스']||0;
+        tMed += brands['메디힐']||0;
+        tAro += brands['아로셀']||0;
+        tWel += brands['웰더마']||0;
+      });
+      bioData.push(tAll>0 ? parseFloat((tBio/tAll*100).toFixed(1)) : null);
+      medData.push(tAll>0 ? parseFloat((tMed/tAll*100).toFixed(1)) : null);
+      aroData.push(tAll>0 ? parseFloat((tAro/tAll*100).toFixed(1)) : null);
+      welData.push(tAll>0 ? parseFloat((tWel/tAll*100).toFixed(1)) : null);
+    });
+
+    trendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label:'바이오던스', data:bioData, borderColor:'#1a56db', backgroundColor:'rgba(26,86,219,.1)', borderWidth:2.5, pointRadius:3, fill:false, tension:.3 },
+          { label:'메디힐', data:medData, borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,.07)', borderWidth:2.5, pointRadius:3, fill:false, tension:.3 },
+          { label:'아로셀', data:aroData, borderColor:'#d97706', backgroundColor:'transparent', borderWidth:1.5, pointRadius:2, fill:false, tension:.3, borderDash:[4,3] },
+          { label:'웰더마', data:welData, borderColor:'#6366f1', backgroundColor:'transparent', borderWidth:1.5, pointRadius:2, fill:false, tension:.3, borderDash:[4,3] },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: { legend: { display:false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+        },
+        scales: {
+          x: { grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{size:11},color:'#7c85a6', maxTicksLimit:20} },
+          y: { grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{size:11},color:'#7c85a6', callback:v=>v+'%'}, beginAtZero:true }
+        }
+      }
+    });
+  } else {
+    // 키워드별 주요 브랜드 추이
+    const kw = document.getElementById('trendKwSelect').value;
+    if (!kw) return;
+    const topBrands = ['바이오던스','메디힐','아로셀','웰더마'];
+    const colors = {'바이오던스':'#1a56db','메디힐':'#dc2626','아로셀':'#d97706','웰더마':'#6366f1'};
+    const datasets = topBrands.map(b => {
+      const data = DATES.map(d => {
+        const brands = RAW[d][kw];
+        if (!brands) return null;
+        const tot = Object.values(brands).reduce((a,v)=>a+v,0);
+        const cnt = brands[b]||0;
+        return tot>0 ? parseFloat((cnt/tot*100).toFixed(1)) : 0;
+      });
+      return { label:b, data, borderColor:colors[b], backgroundColor:'transparent',
+        borderWidth:2, pointRadius:3, fill:false, tension:.3,
+        borderDash: b==='바이오던스'||b==='메디힐' ? [] : [4,3] };
+    });
+
+    trendChart = new Chart(ctx, {
+      type:'line',
+      data:{ labels, datasets },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false},
+          tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y+'%' : '데이터 없음'}` } }
+        },
+        scales:{
+          x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11},color:'#7c85a6',maxTicksLimit:20}},
+          y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11},color:'#7c85a6',callback:v=>v+'%'},beginAtZero:true}
+        }
+      }
+    });
+  }
+
+  // 커스텀 레전드
+  const legendHtml = (trendView==='overall'
+    ? ['바이오던스','메디힐','아로셀','웰더마']
+    : ['바이오던스','메디힐','아로셀','웰더마']
+  ).map((b,i) => {
+    const clrs = {'바이오던스':'#1a56db','메디힐':'#dc2626','아로셀':'#d97706','웰더마':'#6366f1'};
+    const isDash = b==='아로셀'||b==='웰더마';
+    return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-sub)"><span style="display:inline-block;width:16px;height:3px;background:${clrs[b]};border-radius:2px;${isDash?'background:repeating-linear-gradient(to right,'+clrs[b]+' 0,'+clrs[b]+' 4px,transparent 4px,transparent 7px)':''}"></span>${b}</span>`;
+  }).join('');
+  const legendEl = document.createElement('div');
+  legendEl.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)';
+  legendEl.innerHTML = legendHtml;
+  const parent = document.getElementById('trendChart').parentElement.parentElement;
+  const old = parent.querySelector('.trend-legend');
+  if (old) old.remove();
+  legendEl.className = 'trend-legend';
+  parent.appendChild(legendEl);
+}
+
 // ═══════════════ ALERTS ═══════════════
 function renderAlerts(rows, prevRows) {
   const dayBox = document.getElementById('alertDay');
   const d7Box = document.getElementById('alert7d');
   if (!prevRows) { dayBox.classList.add('hidden'); d7Box.classList.add('hidden'); return; }
   const prevMap = Object.fromEntries(prevRows.map(r=>[r.kw,r]));
-
-  // Day alert: +3 or +30%
   const dayAlerts = rows.filter(r=>{
     const p=prevMap[r.kw]; if(!p)return false;
     const delta=r.total-p.total;
     return delta>=3 || (p.total>0&&delta/p.total>=0.3);
-  }).sort((a,b)=>b.total-(prevMap[b.kw]?.total||0)-(a.total-(prevMap[a.kw]?.total||0)));
+  }).sort((a,b)=>(b.total-(prevMap[b.kw]?.total||0))-(a.total-(prevMap[a.kw]?.total||0)));
 
   if (dayAlerts.length) {
     dayBox.classList.remove('hidden');
     document.getElementById('alertDayItems').innerHTML = dayAlerts.map(r=>{
       const d=r.total-(prevMap[r.kw]?.total||0);
       const pct=prevMap[r.kw]?.total>0?Math.round(d/prevMap[r.kw].total*100):0;
-      const medDelta = r.med-(prevMap[r.kw]?.med||0);
+      const medDelta=r.med-(prevMap[r.kw]?.med||0);
       return `<span class="alert-chip">${r.kw} <span class="chip-delta">+${d}개${pct>0?' ('+pct+'%)':''} · 메디힐 ${medDelta>=0?'+':''}${medDelta}</span></span>`;
     }).join('');
   } else dayBox.classList.add('hidden');
 
-  // 7d alert: +50% vs earliest available (proxy for 7d avg)
-  const d7 = rows.filter(r=>{
-    const p=prevMap[r.kw]; if(!p||!p.total)return false;
-    return (r.total-p.total)/p.total >= 0.5;
-  });
+  const d7=rows.filter(r=>{const p=prevMap[r.kw];return p&&p.total&&(r.total-p.total)/p.total>=0.5;});
   if (d7.length && document.getElementById('compareSelect')?.value==='prev_7d') {
     d7Box.classList.remove('hidden');
     document.getElementById('alert7dItems').innerHTML = d7.map(r=>{
-      const p=prevMap[r.kw];
-      const pct=Math.round((r.total-p.total)/p.total*100);
+      const p=prevMap[r.kw]; const pct=Math.round((r.total-p.total)/p.total*100);
       return `<span class="alert-chip" style="border-color:#fca5a5">${r.kw} <span class="chip-delta">+${pct}% vs 기준값</span></span>`;
     }).join('');
   } else d7Box.classList.add('hidden');
@@ -499,7 +729,6 @@ function renderKPI(rows, prevRows) {
   const medG=tAll>0?(tMed/tAll*100).toFixed(1):0;
   const gapG=(parseFloat(bioG)-parseFloat(medG)).toFixed(1);
   const kwBio=rows.filter(r=>r.bio>0).length;
-  const totalW=rows.reduce((a,r)=>a+r.wScore,0);
 
   let bioTrend='', medTrend='', gapTrend='', kwTrend='';
   if (prevRows) {
@@ -513,42 +742,44 @@ function renderKPI(rows, prevRows) {
     const medDiff=(parseFloat(medG)-pMedG).toFixed(1);
     const gDiff=(parseFloat(gapG)-pGap).toFixed(1);
     const pkwBio=prevRows.filter(r=>r.bio>0).length;
-    bioTrend=`<div class="kpi-trend ${bioDiff>=0?'pos':'neg'}">${bioDiff>=0?'▲':'▼'} 전일비 ${bioDiff>=0?'+':''}${bioDiff}%p</div>`;
-    medTrend=`<div class="kpi-trend ${medDiff>=0?'neg':'pos'}">${medDiff>=0?'▲':'▼'} 전일비 ${medDiff>=0?'+':''}${medDiff}%p</div>`;
-    gapTrend=`<div class="kpi-trend ${gDiff>=0?'pos':'neg'}">${gDiff>=0?'▲':'▼'} 전일비 ${gDiff>=0?'+':''}${gDiff}%p</div>`;
+    const cmpL = document.getElementById('compareSelect')?.value==='prev_7d' ? '7일전' : '전일';
+    bioTrend=`<div class="kpi-trend ${bioDiff>=0?'pos':'neg'}">${bioDiff>=0?'▲':'▼'} ${cmpL}비 ${bioDiff>=0?'+':''}${bioDiff}%p</div>`;
+    medTrend=`<div class="kpi-trend ${medDiff>=0?'neg':'pos'}">${medDiff>=0?'▲':'▼'} ${cmpL}비 ${medDiff>=0?'+':''}${medDiff}%p</div>`;
+    gapTrend=`<div class="kpi-trend ${gDiff>=0?'pos':'neg'}">${gDiff>=0?'▲':'▼'} ${cmpL}비 ${gDiff>=0?'+':''}${gDiff}%p</div>`;
     const kwD=kwBio-pkwBio;
-    if (kwD!==0) kwTrend=`<div class="kpi-trend ${kwD>0?'pos':'neg'}">${kwD>0?'▲':'▼'} ${kwD>0?'+':''}${kwD}개</div>`;
+    if(kwD!==0) kwTrend=`<div class="kpi-trend ${kwD>0?'pos':'neg'}">${kwD>0?'▲':'▼'} ${kwD>0?'+':''}${kwD}개</div>`;
   }
 
   const gapClass=parseFloat(gapG)>=0?'':'negative';
   const gapBadge=parseFloat(gapG)>=0
-    ? `<span class="kpi-badge badge-good">✅ 바이오던스 우세</span>`
-    : `<span class="kpi-badge badge-warn">⚠️ 메디힐이 ${Math.abs(gapG)}%p 앞섬</span>`;
+    ?`<span class="kpi-badge badge-good">✅ 바이오던스 우세</span>`
+    :`<span class="kpi-badge badge-warn">⚠️ 메디힐이 ${Math.abs(gapG)}%p 앞섬</span>`;
 
-  const periodLabel = cPeriod==='daily'?'':(cPeriod==='7d'?'(7일 평균)':'(30일 평균)');
+  const periodLabel = {'daily':'','7d':'(최근 7일 평균)','30d':'(최근 30일 평균)','all':'(전체 평균)'}[cPeriod]||'';
+  const currentDateLabel = cPeriod==='daily' ? `<div class="kpi-sub" style="font-size:9px;margin-top:2px">${DATES[cDateIdx]||''}</div>` : '';
 
   document.getElementById('kpiGrid').innerHTML=`
     <div class="kpi-card bio">
-      <div class="kpi-label">바이오던스 점유율 ${periodLabel}<span class="info-btn">?<span class="info-popup">전체 브랜드 노출 수 합계 대비 바이오던스 노출 수의 비율입니다. 단순 콘텐츠 수 기준이며, 쿼리량은 반영되지 않습니다.</span></span></div>
+      <div class="kpi-label">바이오던스 점유율 ${periodLabel}</div>
       <div class="kpi-value">${bioG}%</div>
       <div class="kpi-sub">${tBio}개 노출 · ${kwBio}개 키워드</div>
-      ${bioTrend}
+      ${currentDateLabel}${bioTrend}
     </div>
     <div class="kpi-card med">
-      <div class="kpi-label">메디힐 점유율 ${periodLabel}<span class="info-btn">?<span class="info-popup">전체 브랜드 노출 수 합계 대비 메디힐 노출 수의 비율입니다. 바이오던스와 동일한 기준으로 산정됩니다.</span></span></div>
+      <div class="kpi-label">메디힐 점유율 ${periodLabel}</div>
       <div class="kpi-value">${medG}%</div>
       <div class="kpi-sub">${tMed}개 노출 · ${rows.filter(r=>r.med>0).length}개 키워드</div>
       ${medTrend}
     </div>
     <div class="kpi-card gap">
-      <div class="kpi-label">점유율 격차 (바이오-메디힐)<span class="info-btn">?<span class="info-popup">바이오던스 점유율에서 메디힐 점유율을 뺀 값입니다.<br>양수(+) = 바이오던스 우세 / 음수(−) = 메디힐 우세<br>목표: 양수 전환 후 확대</span></span></div>
-      <div class="kpi-value ${gapClass}">${gapG>0?'+':''}${gapG}%p</div>
+      <div class="kpi-label">점유율 격차 (바이오-메디힐)</div>
+      <div class="kpi-value ${gapClass}">${parseFloat(gapG)>0?'+':''}${gapG}%p</div>
       ${gapBadge}${gapTrend}
     </div>
     <div class="kpi-card neutral">
-      <div class="kpi-label">바이오던스 진입 키워드<span class="info-btn">?<span class="info-popup">모니터링 중인 전체 키워드 중 바이오던스 콘텐츠가 1개 이상 상위 100개 안에 들어가 있는 키워드 수입니다.<br>미진입 키워드는 SEO 공략이 필요한 구간입니다.</span></span></div>
+      <div class="kpi-label">바이오던스 진입 키워드</div>
       <div class="kpi-value">${kwBio}<span style="font-size:15px;font-weight:400;color:var(--text-muted)"> /${rows.length}</span></div>
-      <div class="kpi-sub">미진입 ${rows.length-kwBio}개 · 미진입률 ${Math.round((rows.length-kwBio)/rows.length*100)}%</div>
+      <div class="kpi-sub">미진입 ${rows.length-kwBio}개 · ${DATES.length}일치 히스토리</div>
       ${kwTrend}
     </div>
   `;
@@ -556,15 +787,12 @@ function renderKPI(rows, prevRows) {
 
 // ═══════════════ GAUGE ═══════════════
 function renderGauge(rows) {
-  // Weighted: sum (bio/total * qv) per brand across all kws
-  const brandW={}, brandRaw={};
-  let tw=0, tr=0;
+  const brandW={}, brandRaw={}; let tw=0, tr=0;
   rows.forEach(r=>{
     Object.entries(r.brands).forEach(([b,cnt])=>{
       const total=Object.values(r.brands).reduce((a,v)=>a+v,0);
       const qv=r.qv||0;
-      // weighted: brand_share * qv
-      const w = total>0&&qv>0 ? (cnt/total)*qv : 0;
+      const w=total>0&&qv>0?(cnt/total)*qv:0;
       brandW[b]=(brandW[b]||0)+w; tw+=w;
       brandRaw[b]=(brandRaw[b]||0)+cnt; tr+=cnt;
     });
@@ -587,39 +815,32 @@ function renderGauge(rows) {
     return {segHTML, legHTML};
   }
 
-  const w=makeGauge(brandW, tw||1);
-  const r=makeGauge(brandRaw, tr||1);
+  const w=makeGauge(brandW,tw||1);
+  const r=makeGauge(brandRaw,tr||1);
 
   document.getElementById('gaugeGrid').innerHTML=`
     <div class="gauge-card">
-      <div class="gauge-title">⚖️ 쿼리량 가중 점유율 (브랜드 점유율 × 쿼리량)
-        <span class="info-btn">?<span class="info-popup">각 키워드에서의 브랜드 점유율(노출수÷전체노출)에 해당 키워드의 쿼리량을 곱한 값을 브랜드별로 합산합니다. 쿼리량 미등록 키워드는 제외됩니다.</span></span>
-      </div>
+      <div class="gauge-title">⚖️ 쿼리량 가중 점유율</div>
       <div class="gauge-bar">${w.segHTML}</div>
       <div class="gauge-legend">${w.legHTML}</div>
     </div>
     <div class="gauge-card">
-      <div class="gauge-title">📊 단순 노출 수 기준 점유율
-        <span class="info-btn">?<span class="info-popup">쿼리량 가중 없이 전체 키워드에 걸친 브랜드별 노출 수 합계 기준입니다. 쿼리량이 낮은 키워드도 동등하게 반영됩니다.</span></span>
-      </div>
+      <div class="gauge-title">📊 단순 노출 수 기준 점유율</div>
       <div class="gauge-bar">${r.segHTML}</div>
       <div class="gauge-legend">${r.legHTML}</div>
     </div>
   `;
 }
 
-// ═══════════════ INTEL CARDS ═══════════════
+// ═══════════════ INTEL ═══════════════
 function renderIntel(rows, prevRows) {
   const prevMap=prevRows?Object.fromEntries(prevRows.map(r=>[r.kw,r])):{};
-
   const medOnly=rows.filter(r=>r.bio===0&&r.med>0).sort((a,b)=>b.qv-a.qv);
   const bioWin=rows.filter(r=>r.bio>r.med&&r.bio>0).sort((a,b)=>b.gap-a.gap);
-  const bioDom=rows.filter(r=>r.bioPct>=50&&r.bio>0).sort((a,b)=>b.bioPct-a.bioPct);
   const medSurge=prevRows?rows.filter(r=>{const p=prevMap[r.kw];return p&&(r.med-p.med)>=2;}).sort((a,b)=>(b.med-(prevMap[b.kw]?.med||0))-(a.med-(prevMap[a.kw]?.med||0))):[];
   const bioDrop=prevRows?rows.filter(r=>{const p=prevMap[r.kw];return p&&p.bio>0&&(r.bioPct<p.bioPct-5);}).sort((a,b)=>(a.bioPct-(prevMap[a.kw]?.bioPct||0))-(b.bioPct-(prevMap[b.kw]?.bioPct||0))):[];
   const newComp=prevRows?rows.map(r=>{const p=prevMap[r.kw];if(!p)return null;const nb=Object.keys(r.brands).filter(b=>b!=='바이오던스'&&b!=='메디힐'&&!p.brands[b]);return nb.length?{kw:r.kw,brands:nb}:null;}).filter(Boolean):[];
-
-  const cmpLabel = (()=>{ const v=document.getElementById('compareSelect')?.value||'prev_day'; return v==='prev_7d'?'직전7일평균':'전일'; })();
+  const cmpLabel=document.getElementById('compareSelect')?.value==='prev_7d'?'직전7일평균':'전일';
 
   function rows6(arr, valFn, cls='val-red') {
     if (!arr.length) return '<div class="intel-empty">해당 없음 ✅</div>';
@@ -628,104 +849,45 @@ function renderIntel(rows, prevRows) {
 
   document.getElementById('intelGrid').innerHTML=`
     <div class="intel-card">
-      <div class="intel-hd">
-        <div class="intel-icon ic-red">🚨</div>
-        <div class="intel-title-wrap">
-          <div class="intel-title">메디힐 독점 · 바이오던스 미진입</div>
-          <div class="intel-desc">바이오던스 노출 0 · 메디힐 점유 중인 키워드<br>→ SEO 콘텐츠 우선 공략 필요 (${medOnly.length}개)</div>
-        </div>
-      </div>
+      <div class="intel-hd"><div class="intel-icon ic-red">🚨</div><div class="intel-title-wrap"><div class="intel-title">메디힐 독점 · 바이오던스 미진입</div><div class="intel-desc">SEO 콘텐츠 우선 공략 필요 (${medOnly.length}개)</div></div></div>
       <div class="intel-rows">${rows6(medOnly, r=>`메디힐 ${r.med}개 · 쿼리량 ${r.qv?r.qv.toLocaleString():'미등록'}`, 'val-red')}</div>
     </div>
     <div class="intel-card">
-      <div class="intel-hd">
-        <div class="intel-icon ic-orange">📈</div>
-        <div class="intel-title-wrap">
-          <div class="intel-title">메디힐 콘텐츠 급증 (${cmpLabel} 대비)</div>
-          <div class="intel-desc">메디힐 노출 수 +2개 이상 증가한 키워드<br>→ 경쟁사 SEO 캠페인 가능성, 즉시 모니터링 필요</div>
-        </div>
-      </div>
+      <div class="intel-hd"><div class="intel-icon ic-orange">📈</div><div class="intel-title-wrap"><div class="intel-title">메디힐 콘텐츠 급증 (${cmpLabel} 대비)</div><div class="intel-desc">메디힐 노출 수 +2개 이상 증가</div></div></div>
       <div class="intel-rows">${prevRows?rows6(medSurge, r=>`+${r.med-(prevMap[r.kw]?.med||0)}개 (총 ${r.med})`, 'val-orange'):'<div class="intel-empty">비교 데이터 없음</div>'}</div>
     </div>
     <div class="intel-card">
-      <div class="intel-hd">
-        <div class="intel-icon ic-green">🏆</div>
-        <div class="intel-title-wrap">
-          <div class="intel-title">바이오던스 우세 키워드</div>
-          <div class="intel-desc">메디힐보다 바이오던스 노출이 더 많은 구간<br>→ 현재 우위 유지 및 점유율 확대 관리 (${bioWin.length}개)</div>
-        </div>
-      </div>
+      <div class="intel-hd"><div class="intel-icon ic-green">🏆</div><div class="intel-title-wrap"><div class="intel-title">바이오던스 우세 키워드</div><div class="intel-desc">메디힐보다 바이오던스 노출이 더 많은 구간 (${bioWin.length}개)</div></div></div>
       <div class="intel-rows">${rows6(bioWin, r=>`바이오 ${r.bio} vs 메디힐 ${r.med}`, 'val-green')}</div>
     </div>
     <div class="intel-card">
-      <div class="intel-hd">
-        <div class="intel-icon ic-blue">💪</div>
-        <div class="intel-title-wrap">
-          <div class="intel-title">바이오던스 50%+ 독점 구간</div>
-          <div class="intel-desc">점유율 50% 이상으로 압도적 우위인 키워드<br>→ 경쟁사 진입 전 방어 콘텐츠 확보 필요</div>
-        </div>
-      </div>
-      <div class="intel-rows">${rows6(bioDom, r=>`${r.bioPct}% 점유 (${r.bio}개)`, 'val-blue')}</div>
-    </div>
-    <div class="intel-card">
-      <div class="intel-hd">
-        <div class="intel-icon ic-red">⬇️</div>
-        <div class="intel-title-wrap">
-          <div class="intel-title">바이오던스 점유율 하락 (${cmpLabel} 대비)</div>
-          <div class="intel-desc">전일 대비 점유율 −5%p 이상 하락한 키워드<br>→ 경쟁사 역전 가능성, 콘텐츠 보강 검토</div>
-        </div>
-      </div>
+      <div class="intel-hd"><div class="intel-icon ic-red">⬇️</div><div class="intel-title-wrap"><div class="intel-title">바이오던스 점유율 하락 (${cmpLabel})</div><div class="intel-desc">−5%p 이상 하락한 키워드</div></div></div>
       <div class="intel-rows">${prevRows?rows6(bioDrop, r=>`${prevMap[r.kw]?.bioPct||0}%→${r.bioPct}% (${(r.bioPct-(prevMap[r.kw]?.bioPct||0))}%p)`, 'val-red'):'<div class="intel-empty">비교 데이터 없음</div>'}</div>
     </div>
     <div class="intel-card">
-      <div class="intel-hd">
-        <div class="intel-icon ic-yellow">🆕</div>
-        <div class="intel-title-wrap">
-          <div class="intel-title">신규 진입 경쟁 브랜드 (${cmpLabel})</div>
-          <div class="intel-desc">이전에 없다가 새로 상위권에 진입한 브랜드<br>→ 신규 경쟁 세력 조기 감지 및 대응 준비</div>
-        </div>
-      </div>
+      <div class="intel-hd"><div class="intel-icon ic-yellow">🆕</div><div class="intel-title-wrap"><div class="intel-title">신규 진입 경쟁 브랜드</div><div class="intel-desc">이전에 없다가 새로 진입한 브랜드</div></div></div>
       <div class="intel-rows">${prevRows?newComp.slice(0,6).map(r=>`<div class="intel-row"><span class="intel-kw">${r.kw}</span><span class="intel-val val-purple">${r.brands.join(', ')}</span></div>`).join('')||'<div class="intel-empty">신규 진입 없음 ✅</div>':'<div class="intel-empty">비교 데이터 없음</div>'}</div>
     </div>
   `;
 }
 
-// ═══════════════ 2×2 MATRIX ═══════════════
+// ═══════════════ MATRIX ═══════════════
 function renderMatrix(rows) {
-  const HIGH_QV = 2000;
-  // 4 cells: [바이오진입·고쿼리], [메디힐독점·고쿼리], [바이오진입·저쿼리], [메디힐독점·저쿼리]
-  const tl = rows.filter(r=>r.bio>0&&r.qv>=HIGH_QV).sort((a,b)=>b.qv-a.qv);
-  const tr = rows.filter(r=>r.bio===0&&r.med>0&&r.qv>=HIGH_QV).sort((a,b)=>b.qv-a.qv);
-  const bl = rows.filter(r=>r.bio>0&&(r.qv<HIGH_QV||r.qv===0)).sort((a,b)=>b.total-a.total);
-  const br = rows.filter(r=>r.bio===0&&r.med>0&&(r.qv<HIGH_QV||r.qv===0)).sort((a,b)=>b.total-a.total);
-
-  const chips = (arr, cls) => arr.slice(0,10).map(r=>`<span class="m-chip ${cls}" title="쿼리량: ${r.qv?r.qv.toLocaleString():'미등록'}">${r.kw}</span>`).join('') || `<span style="font-size:11px;color:var(--text-muted)">해당 없음</span>`;
-
+  const HIGH_QV=2000;
+  const tl=rows.filter(r=>r.bio>0&&r.qv>=HIGH_QV).sort((a,b)=>b.qv-a.qv);
+  const tr=rows.filter(r=>r.bio===0&&r.med>0&&r.qv>=HIGH_QV).sort((a,b)=>b.qv-a.qv);
+  const bl=rows.filter(r=>r.bio>0&&(r.qv<HIGH_QV||r.qv===0)).sort((a,b)=>b.total-a.total);
+  const br=rows.filter(r=>r.bio===0&&r.med>0&&(r.qv<HIGH_QV||r.qv===0)).sort((a,b)=>b.total-a.total);
+  const chips=(arr,cls)=>arr.slice(0,10).map(r=>`<span class="m-chip ${cls}" title="쿼리량: ${r.qv?r.qv.toLocaleString():'미등록'}">${r.kw}</span>`).join('')||`<span style="font-size:11px;color:var(--text-muted)">해당 없음</span>`;
   document.getElementById('matrixWrap').innerHTML=`
     <div class="matrix-axis-y-wrap">
-      <div class="matrix-axis-y">↑ 쿼리량 높음 (고검색량)</div>
+      <div class="matrix-axis-y">↑ 쿼리량 높음</div>
       <div style="flex:1">
         <div class="matrix">
-          <div class="matrix-cell tl">
-            <div class="m-label">✅ 진입 완료 · 고쿼리 (${tl.length}개)</div>
-            <div class="m-kw-chips">${chips(tl,'chip-green')}</div>
-            <div style="font-size:10px;color:var(--text-muted);margin-top:8px">현재 우위 유지 필요. 경쟁사 역전 즉시 감지.</div>
-          </div>
-          <div class="matrix-cell tr">
-            <div class="m-label">🚨 미진입 · 고쿼리 (${tr.length}개)</div>
-            <div class="m-kw-chips">${chips(tr,'chip-red')}</div>
-            <div style="font-size:10px;color:var(--text-muted);margin-top:8px">최우선 SEO 공략 구간. 메디힐 독점 중.</div>
-          </div>
-          <div class="matrix-cell bl">
-            <div class="m-label">💬 진입 완료 · 저쿼리 (${bl.length}개)</div>
-            <div class="m-kw-chips">${chips(bl,'chip-muted')}</div>
-            <div style="font-size:10px;color:var(--text-muted);margin-top:8px">점유율 확대 모니터링. 쿼리량 성장시 주목.</div>
-          </div>
-          <div class="matrix-cell br">
-            <div class="m-label">⚠️ 미진입 · 저쿼리 (${br.length}개)</div>
-            <div class="m-kw-chips">${chips(br,'chip-orange')}</div>
-            <div style="font-size:10px;color:var(--text-muted);margin-top:8px">중장기 검토 구간. 우선순위 낮음.</div>
-          </div>
+          <div class="matrix-cell tl"><div class="m-label">✅ 진입 완료 · 고쿼리 (${tl.length}개)</div><div class="m-kw-chips">${chips(tl,'chip-green')}</div><div style="font-size:10px;color:var(--text-muted);margin-top:8px">현재 우위 유지 필요.</div></div>
+          <div class="matrix-cell tr"><div class="m-label">🚨 미진입 · 고쿼리 (${tr.length}개)</div><div class="m-kw-chips">${chips(tr,'chip-red')}</div><div style="font-size:10px;color:var(--text-muted);margin-top:8px">최우선 SEO 공략 구간.</div></div>
+          <div class="matrix-cell bl"><div class="m-label">💬 진입 완료 · 저쿼리 (${bl.length}개)</div><div class="m-kw-chips">${chips(bl,'chip-muted')}</div></div>
+          <div class="matrix-cell br"><div class="m-label">⚠️ 미진입 · 저쿼리 (${br.length}개)</div><div class="m-kw-chips">${chips(br,'chip-orange')}</div></div>
         </div>
         <div class="matrix-axis-x">바이오던스 진입 완료 → 미진입 →</div>
       </div>
@@ -738,7 +900,6 @@ function renderTable(rows, prevRows) {
   const prevMap=prevRows?Object.fromEntries(prevRows.map(r=>[r.kw,r])):{};
   const all=rows.length;
   const fCounts={all, high:rows.filter(r=>r.qv>=3000).length, ahead:rows.filter(r=>r.gap>0).length, behind:rows.filter(r=>r.gap<0).length, zero:rows.filter(r=>r.bio===0).length};
-
   document.getElementById('filterTabs').innerHTML=['all','high','ahead','behind','zero'].map(f=>{
     const labels={all:'전체',high:'고쿼리(3천+)',ahead:'바이오 우세',behind:'메디힐 우세',zero:'미진입'};
     return `<button class="filter-tab ${cFilter===f?'active':''}" onclick="setFilter('${f}')">${labels[f]}<span class="fcnt">${fCounts[f]}</span></button>`;
@@ -765,22 +926,16 @@ function renderTable(rows, prevRows) {
     const tDelta=p?r.total-p.total:null;
     const pTag=getPriority(r.kw);
     const pHTML=pTag?`<span class="p-tag ${pTag==='필수'?'p-required':pTag==='2순위'?'p-2nd':'p-linked'}">${pTag}</span>`:'';
-    const gapN=r.gap; // 바이오 - 메디힐
+    const gapN=r.gap;
     const gapHTML=gapN>0?`<span class="gap-pill gap-pos">+${gapN}%p</span>`:gapN<0?`<span class="gap-pill gap-neg">${gapN}%p</span>`:`<span class="gap-pill gap-zero">동등</span>`;
     const dHTML=tDelta===null?'':(tDelta>0?`<span class="delta-b d-up">+${tDelta}</span>`:tDelta<0?`<span class="delta-b d-dn">${tDelta}</span>`:`<span class="delta-b d-flat">—</span>`);
     const ws=r.qv>0?r.wScore.toLocaleString():'<span style="color:var(--text-faint)">—</span>';
     return `<tr>
-      <td><div class="kw-name">${r.kw} ${pHTML}</div><div class="kw-meta"><span>쿼리량 ${r.qv?r.qv.toLocaleString():'미등록'}</span></div></td>
+      <td><div class="kw-name">${r.kw} ${pHTML}</div><div class="kw-meta"><span>쿼리량 ${r.qv?r.qv.toLocaleString():'미등록'}</span>${r.daysUsed?`<span style="color:var(--accent)">${r.daysUsed}일 평균</span>`:''}</div></td>
       <td class="right" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted)">${r.qv?r.qv.toLocaleString():'—'}</td>
       <td class="right" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--bio)">${ws}</td>
-      <td class="bar-cell">
-        <div class="bar-wrap"><div class="bar-track"><div class="bar-fill fill-bio" style="width:${r.bioPct}%"></div></div><span class="bar-pct ${r.bio>0?'pct-bio':'pct-zero'}">${r.bioPct}%</span></div>
-        <div class="cnt-sub">${r.bio}개 노출</div>
-      </td>
-      <td class="bar-cell">
-        <div class="bar-wrap"><div class="bar-track"><div class="bar-fill fill-med" style="width:${r.medPct}%"></div></div><span class="bar-pct ${r.med>0?'pct-med':'pct-zero'}">${r.medPct}%</span></div>
-        <div class="cnt-sub">${r.med}개 노출</div>
-      </td>
+      <td class="bar-cell"><div class="bar-wrap"><div class="bar-track"><div class="bar-fill fill-bio" style="width:${r.bioPct}%"></div></div><span class="bar-pct ${r.bio>0?'pct-bio':'pct-zero'}">${r.bioPct}%</span></div><div class="cnt-sub">${r.bio}개 노출</div></td>
+      <td class="bar-cell"><div class="bar-wrap"><div class="bar-track"><div class="bar-fill fill-med" style="width:${r.medPct}%"></div></div><span class="bar-pct ${r.med>0?'pct-med':'pct-zero'}">${r.medPct}%</span></div><div class="cnt-sub">${r.med}개 노출</div></td>
       <td class="right">${gapHTML}</td>
       <td class="right" style="font-family:'JetBrains Mono',monospace;font-weight:600">${r.total}</td>
       <td class="right">${dHTML}</td>
@@ -788,7 +943,7 @@ function renderTable(rows, prevRows) {
   }).join('');
 }
 
-// ═══════════════ STACKED BARS ═══════════════
+// ═══════════════ STACKED ═══════════════
 function renderStacked(rows) {
   const sorted=[...rows].filter(r=>r.total>0).sort((a,b)=>b.total-a.total);
   const maxT=Math.max(...sorted.map(r=>r.total));
@@ -813,30 +968,20 @@ document.addEventListener('mousemove',e=>{if(TT.classList.contains('show'))mvTip
 // ═══════════════ FILTER / SORT ═══════════════
 function setFilter(f){cFilter=f;render();}
 function sortBy(c){if(cSort===c)cSortDir=cSortDir==='desc'?'asc':'desc';else{cSort=c;cSortDir='desc';}render();}
-
-// ═══════════════ EMPTY STATE ═══════════════
-function renderEmpty(msg) {
-  return `<div class="empty-state"><div class="e-icon">📭</div><div class="e-title">데이터 없음</div><div class="e-desc">${msg}</div></div>`;
-}
+function renderEmpty(msg){return `<div class="empty-state"><div class="e-icon">📭</div><div class="e-title">데이터 없음</div><div class="e-desc">${msg}</div></div>`;}
 
 // ═══════════════ MAIN RENDER ═══════════════
 function render() {
   buildDateNav();
   const rows=getRows();
   const prevRows=getPrevRows();
-
   if (!rows.length) {
     document.getElementById('kpiGrid').innerHTML=renderEmpty('선택한 기간의 데이터가 없습니다.<br>데이터가 쌓이면 자동으로 표시됩니다.');
     return;
   }
-
-  // Period availability notice for 7d/30d
-  if (cPeriod==='7d'||cPeriod==='30d') {
-    const notice=document.createElement('div');
-  }
-
   renderAlerts(rows, prevRows);
   renderKPI(rows, prevRows);
+  drawTrendChart();
   renderGauge(rows);
   renderIntel(rows, prevRows);
   renderMatrix(rows);
@@ -844,7 +989,7 @@ function render() {
   renderStacked(rows);
 }
 
-render();
+loadSheetData();
 </script>
 </body>
 </html>
