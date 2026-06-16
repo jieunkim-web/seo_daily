@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO 점유율 대시보드 · Biodance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bio: #534AB7;
+    --bio-light: #EEEDFE;
+    --med: #1D9E75;
+    --med-light: #E1F5EE;
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --border: #E8E6DF;
+    --text: #2C2C2A;
+    --text-sub: #888780;
+    --text-xs: #B4B2A9;
+    --danger: #D85A30;
+    --up: #1D9E75;
+    --radius: 12px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif; font-size: 14px; min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+  header .badge { font-size: 11px; background: var(--bio-light); color: var(--bio); padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+  #status-dot.ok { background: var(--up); }
+  #status-dot.err { background: var(--danger); }
+  #status-text { font-size: 12px; color: var(--text-sub); }
+
+  /* PROXY SETUP */
+  #proxy-banner { background: #FAEEDA; border-bottom: 1px solid #FAC775; padding: 10px 28px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  #proxy-banner input { flex: 1; max-width: 420px; padding: 6px 10px; border: 1px solid #FAC775; border-radius: 6px; font-size: 13px; background: #fff; }
+  #proxy-banner button { padding: 6px 14px; background: #BA7517; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+
+  /* LAYOUT */
+  main { padding: 24px 28px; max-width: 1100px; margin: 0 auto; }
+
+  /* DATE FILTER */
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-bar label { font-size: 12px; color: var(--text-sub); }
+  .filter-bar select, .filter-bar input[type=date] { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--surface); color: var(--text); cursor: pointer; }
+  .btn-load { padding: 7px 16px; background: var(--bio); color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .btn-load:hover { background: #3C3489; }
+
+  /* KPI CARDS */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+  .kpi-label { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; }
+  .kpi-value { font-size: 26px; font-weight: 600; letter-spacing: -1px; }
+  .kpi-sub { font-size: 11px; color: var(--text-xs); margin-top: 4px; }
+  .kpi-delta { font-size: 12px; font-weight: 500; margin-top: 4px; }
+  .kpi-delta.up { color: var(--up); }
+  .kpi-delta.down { color: var(--danger); }
+  .kpi.bio { border-top: 3px solid var(--bio); }
+  .kpi.med { border-top: 3px solid var(--med); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card h2 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .card .card-sub { font-size: 11px; color: var(--text-sub); margin-bottom: 16px; }
+
+  /* CHART WRAPPER */
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 7px 10px; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: 500; border-bottom: 1px solid var(--border); background: #FAFAF8; }
+  td { padding: 8px 10px; border-bottom: 1px solid #F3F2EE; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFAF8; }
+  .brand-bio { color: var(--bio); font-weight: 600; }
+  .brand-med { color: var(--med); font-weight: 600; }
+  .gap-pos { color: var(--up); font-weight: 600; }
+  .gap-neg { color: var(--danger); font-weight: 600; }
+
+  /* BAR */
+  .bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .bar-bg { flex: 1; height: 6px; background: #F0EFE8; border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+
+  /* RANK */
+  .rank-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #F3F2EE; }
+  .rank-item:last-child { border-bottom: none; }
+  .rank-num { width: 20px; font-size: 12px; color: var(--text-xs); text-align: center; flex-shrink: 0; }
+  .rank-name { flex: 1; font-size: 13px; }
+  .rank-name.focus { color: var(--bio); font-weight: 600; }
+  .rank-name.focus-med { color: var(--med); font-weight: 600; }
+  .rank-val { font-size: 13px; font-weight: 500; min-width: 40px; text-align: right; }
+
+  /* LOADING / ERROR */
+  .state-msg { text-align: center; padding: 40px; color: var(--text-sub); font-size: 13px; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--bio); border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 10px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* DELTA BADGES */
+  .delta-up { background: #EAF3DE; color: #27500A; padding: 1px 7px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .delta-down { background: #FAECE7; color: #712B13; padding: 1px 7px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+
+  @media (max-width: 700px) {
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>SEO 점유율 모니터링</h1>
+  </div>
+  <span class="badge">Biodance · Naver Blog</span>
+  <div class="header-right">
+    <div id="status-dot"></div>
+    <span id="status-text">연결 전</span>
+  </div>
+</header>
+
+<div id="proxy-banner">
+  <span>⚙ Apps Script 웹앱 URL 입력</span>
+  <input type="text" id="proxy-input" placeholder="https://script.google.com/macros/s/.../exec" />
+  <button onclick="saveProxy()">저장 후 불러오기</button>
+</div>
+
+<main>
+  <div class="filter-bar">
+    <label>기간</label>
+    <select id="range-select" onchange="onRangeChange()">
+      <option value="7">최근 7일</option>
+      <option value="14">최근 14일</option>
+      <option value="30" selected>최근 30일</option>
+      <option value="custom">직접 입력</option>
+    </select>
+    <input type="date" id="date-from" style="display:none">
+    <input type="date" id="date-to" style="display:none">
+    <button class="btn-load" onclick="loadData()">불러오기</button>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi bio">
+      <div class="kpi-label">바이오던스 평균 점유율</div>
+      <div class="kpi-value" id="kpi-bio">—</div>
+      <div class="kpi-delta" id="kpi-bio-delta"></div>
+      <div class="kpi-sub">전체 키워드 평균</div>
+    </div>
+    <div class="kpi med">
+      <div class="kpi-label">메디힐 평균 점유율</div>
+      <div class="kpi-value" id="kpi-med">—</div>
+      <div class="kpi-delta" id="kpi-med-delta"></div>
+      <div class="kpi-sub">전체 키워드 평균</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">바이오던스 우세 키워드</div>
+      <div class="kpi-value" id="kpi-win">—</div>
+      <div class="kpi-sub">메디힐 대비 점유율 높은 키워드</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">모니터링 키워드 수</div>
+      <div class="kpi-value" id="kpi-kw">—</div>
+      <div class="kpi-sub" id="kpi-date-range">—</div>
+    </div>
+  </div>
+
+  <!-- 추이 차트 + 순위 -->
+  <div class="grid-3">
+    <div class="card">
+      <h2>바이오던스 vs 메디힐 일별 점유율 추이</h2>
+      <div class="card-sub">전체 키워드 평균 기준</div>
+      <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>브랜드 전체 순위</h2>
+      <div class="card-sub" id="rank-date-label">오늘 기준 상위 10</div>
+      <div id="rank-list"><div class="state-msg">데이터 없음</div></div>
+    </div>
+  </div>
+
+  <!-- 키워드별 비교 -->
+  <div class="card" style="margin-bottom:16px;">
+    <h2>키워드별 바이오던스 vs 메디힐 점유율</h2>
+    <div class="card-sub">선택 기간 평균 · 바이오던스 점유율 높은 순 정렬</div>
+    <div id="kw-table-wrap"><div class="state-msg"><div class="spinner"></div><br>데이터를 불러오세요</div></div>
+  </div>
+
+  <!-- 변동 알림 -->
+  <div class="card">
+    <h2>최근 변동 감지</h2>
+    <div class="card-sub">오늘 vs 직전 7일 평균 · ±5%p 이상 변동 키워드</div>
+    <div id="alert-table-wrap"><div class="state-msg">데이터를 불러오세요</div></div>
+  </div>
+</main>
+
+<script>
+const SHEET_ID = '1BuPAP7_QQEtUQaTMucoDO3cTA6Im6apVtX2HiQiBkI8';
+const FOCUS = ['바이오던스', '메디힐'];
+const THRESHOLD = 5;
+
+let PROXY_URL = localStorage.getItem('seo_proxy_url') || '';
+let allData = null;
+let trendChart = null;
+
+// 저장된 URL 있으면 배너 숨기기
+window.onload = () => {
+  if (PROXY_URL) {
+    document.getElementById('proxy-input').value = PROXY_URL;
+    document.getElementById('proxy-banner').style.display = 'none';
+    loadData();
+  }
+};
+
+function onRangeChange() {
+  const v = document.getElementById('range-select').value;
+  document.getElementById('date-from').style.display = v === 'custom' ? '' : 'none';
+  document.getElementById('date-to').style.display = v === 'custom' ? '' : 'none';
+}
+
+async function saveProxy() {
+  const url = document.getElementById('proxy-input').value.trim();
+  if (!url) return;
+  PROXY_URL = url;
+  localStorage.setItem('seo_proxy_url', url);
+  document.getElementById('proxy-banner').style.display = 'none';
+  await loadData();
+}
+
+async function loadData() {
+  if (!PROXY_URL) return;
+  setStatus('loading');
+  try {
+    const resp = await fetch(PROXY_URL);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const raw = await resp.json();
+    allData = parseSheet(raw);
+    setStatus('ok');
+    render();
+  } catch(e) {
+    setStatus('err', e.message);
+  }
+}
+
+function parseSheet(raw) {
+  // row0 = COUNTA header, row1 = headers, row2+ = data
+  const headers = raw[1];
+  const dateIdx = 0, kwIdx = 1;
+  const brandIdx = {};
+  for (let i = 2; i < headers.length; i++) {
+    if (headers[i]) brandIdx[headers[i]] = i;
+  }
+  const rows = [];
+  for (let r = 2; r < raw.length; r++) {
+    const row = raw[r];
+    if (!row[dateIdx]) continue;
+    const dateStr = String(row[dateIdx]).slice(0, 10);
+    const brands = {};
+    Object.keys(brandIdx).forEach(b => {
+      brands[b] = parseFloat(row[brandIdx[b]]) || 0;
+    });
+    rows.push({ date: dateStr, kw: row[kwIdx], brands });
+  }
+  return { rows, brandIdx };
+}
+
+function getDateRange() {
+  const range = document.getElementById('range-select').value;
+  const today = new Date();
+  const fmt = d => d.toISOString().slice(0, 10);
+  if (range === 'custom') {
+    return {
+      from: document.getElementById('date-from').value,
+      to: document.getElementById('date-to').value || fmt(today)
+    };
+  }
+  const from = new Date(today);
+  from.setDate(today.getDate() - parseInt(range));
+  return { from: fmt(from), to: fmt(today) };
+}
+
+function render() {
+  if (!allData) return;
+  const { from, to } = getDateRange();
+  const rows = allData.rows.filter(r => r.date >= from && r.date <= to);
+
+  if (rows.length === 0) {
+    ['kw-table-wrap','alert-table-wrap','rank-list'].forEach(id => {
+      document.getElementById(id).innerHTML = '<div class="state-msg">해당 기간 데이터 없음</div>';
+    });
+    return;
+  }
+
+  // 날짜별 그룹핑
+  const byDate = {};
+  rows.forEach(r => {
+    if (!byDate[r.date]) byDate[r.date] = [];
+    byDate[r.date].push(r);
+  });
+  const dates = Object.keys(byDate).sort();
+
+  // 키워드별 브랜드 평균
+  const kwBrand = {};
+  rows.forEach(r => {
+    if (!kwBrand[r.kw]) kwBrand[r.kw] = {};
+    Object.keys(r.brands).forEach(b => {
+      if (!kwBrand[r.kw][b]) kwBrand[r.kw][b] = [];
+      kwBrand[r.kw][b].push(r.brands[b]);
+    });
+  });
+  const kwAvg = {};
+  Object.keys(kwBrand).forEach(kw => {
+    kwAvg[kw] = {};
+    Object.keys(kwBrand[kw]).forEach(b => {
+      const arr = kwBrand[kw][b];
+      kwAvg[kw][b] = arr.reduce((a,c) => a+c, 0) / arr.length;
+    });
+  });
+
+  // 전체 브랜드 평균
+  const allBrands = Object.keys(allData.brandIdx);
+  const brandOverall = {};
+  allBrands.forEach(b => {
+    const vals = Object.keys(kwAvg).map(kw => kwAvg[kw][b] || 0);
+    brandOverall[b] = vals.reduce((a,c) => a+c, 0) / vals.length;
+  });
+
+  // KPI
+  const bioAvg = brandOverall['바이오던스'] || 0;
+  const medAvg = brandOverall['메디힐'] || 0;
+  const kws = Object.keys(kwAvg);
+  const bioWin = kws.filter(kw => (kwAvg[kw]['바이오던스']||0) > (kwAvg[kw]['메디힐']||0)).length;
+
+  document.getElementById('kpi-bio').textContent = bioAvg.toFixed(1) + '%';
+  document.getElementById('kpi-med').textContent = medAvg.toFixed(1) + '%';
+  document.getElementById('kpi-win').textContent = `${bioWin} / ${kws.length}`;
+  document.getElementById('kpi-kw').textContent = kws.length;
+  document.getElementById('kpi-date-range').textContent = `${from} ~ ${to}`;
+
+  // 델타 (첫날 vs 마지막날)
+  function dayAvg(dateStr, brand) {
+    const dayRows = byDate[dateStr] || [];
+    const vals = dayRows.map(r => r.brands[brand] || 0);
+    return vals.length ? vals.reduce((a,c) => a+c, 0) / vals.length : 0;
+  }
+  if (dates.length >= 2) {
+    const firstDate = dates[0], lastDate = dates[dates.length-1];
+    ['바이오던스','메디힐'].forEach((brand, i) => {
+      const id = i === 0 ? 'kpi-bio-delta' : 'kpi-med-delta';
+      const first = dayAvg(firstDate, brand);
+      const last = dayAvg(lastDate, brand);
+      const d = last - first;
+      const el = document.getElementById(id);
+      el.textContent = (d >= 0 ? '▲ +' : '▼ ') + d.toFixed(1) + '%p (기간 내)';
+      el.className = 'kpi-delta ' + (d >= 0 ? 'up' : 'down');
+    });
+  }
+
+  // 추이 차트
+  const trendLabels = dates;
+  const bioTrend = dates.map(d => {
+    const dr = byDate[d] || [];
+    const vals = dr.map(r => r.brands['바이오던스'] || 0);
+    return vals.length ? vals.reduce((a,c)=>a+c,0)/vals.length : null;
+  });
+  const medTrend = dates.map(d => {
+    const dr = byDate[d] || [];
+    const vals = dr.map(r => r.brands['메디힐'] || 0);
+    return vals.length ? vals.reduce((a,c)=>a+c,0)/vals.length : null;
+  });
+
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trend-chart'), {
+    type: 'line',
+    data: {
+      labels: trendLabels,
+      datasets: [
+        { label: '바이오던스', data: bioTrend, borderColor: '#534AB7', backgroundColor: 'rgba(83,74,183,0.08)', tension: 0.3, pointRadius: 2, fill: true },
+        { label: '메디힐', data: medTrend, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.06)', tension: 0.3, pointRadius: 2, fill: true }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { size: 12 }, boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { font: { size: 11 }, maxTicksLimit: 8 }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, callback: v => v.toFixed(1)+'%' }, grid: { color: '#F0EFE8' } }
+      }
+    }
+  });
+
+  // 브랜드 순위 (최신 날짜 기준)
+  const latestDate = dates[dates.length-1];
+  const latestRows = byDate[latestDate] || [];
+  const latestBrandAvg = {};
+  allBrands.forEach(b => {
+    const vals = latestRows.map(r => r.brands[b] || 0);
+    latestBrandAvg[b] = vals.length ? vals.reduce((a,c)=>a+c,0)/vals.length : 0;
+  });
+  const rankSorted = Object.entries(latestBrandAvg).sort((a,b) => b[1]-a[1]).slice(0, 10);
+  document.getElementById('rank-date-label').textContent = `${latestDate} 기준 상위 10`;
+  const maxShare = rankSorted[0]?.[1] || 1;
+  document.getElementById('rank-list').innerHTML = rankSorted.map(([brand, share], i) => {
+    const isBio = brand === '바이오던스';
+    const isMed = brand === '메디힐';
+    const cls = isBio ? 'focus' : isMed ? 'focus-med' : '';
+    const barColor = isBio ? '#534AB7' : isMed ? '#1D9E75' : '#D3D1C7';
+    const pct = (share / maxShare * 100).toFixed(0);
+    return `<div class="rank-item">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-name ${cls}">${brand}</span>
+      <div class="bar-wrap" style="flex:1">
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      </div>
+      <span class="rank-val">${share.toFixed(1)}%</span>
+    </div>`;
+  }).join('');
+
+  // 키워드별 비교 테이블
+  const kwSorted = kws.sort((a,b) => (kwAvg[b]['바이오던스']||0) - (kwAvg[a]['바이오던스']||0));
+  document.getElementById('kw-table-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>키워드</th>
+        <th style="color:#534AB7">바이오던스</th>
+        <th style="color:#1D9E75">메디힐</th>
+        <th>격차</th>
+        <th>비율 비교</th>
+      </tr></thead>
+      <tbody>
+        ${kwSorted.map(kw => {
+          const bio = kwAvg[kw]['바이오던스'] || 0;
+          const med = kwAvg[kw]['메디힐'] || 0;
+          const gap = bio - med;
+          const maxVal = Math.max(bio, med, 0.1);
+          return `<tr>
+            <td>${kw}</td>
+            <td class="brand-bio">${bio.toFixed(1)}%</td>
+            <td class="brand-med">${med.toFixed(1)}%</td>
+            <td class="${gap >= 0 ? 'gap-pos' : 'gap-neg'}">${gap >= 0 ? '+' : ''}${gap.toFixed(1)}%p</td>
+            <td style="min-width:140px">
+              <div style="display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden;">
+                <div style="width:${(bio/maxVal*50).toFixed(0)}%;background:#534AB7;border-radius:3px 0 0 3px;"></div>
+                <div style="width:${(med/maxVal*50).toFixed(0)}%;background:#1D9E75;border-radius:0 3px 3px 0;"></div>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+
+  // 변동 알림 (오늘 vs 직전 7일)
+  const todayStr = dates[dates.length-1];
+  const prev7 = dates.slice(-8, -1);
+  function calcAvg(targetDates) {
+    const kwb = {};
+    targetDates.forEach(d => {
+      (byDate[d]||[]).forEach(r => {
+        if (!kwb[r.kw]) kwb[r.kw] = {};
+        FOCUS.forEach(b => {
+          if (!kwb[r.kw][b]) kwb[r.kw][b] = [];
+          kwb[r.kw][b].push(r.brands[b]||0);
+        });
+      });
+    });
+    const res = {};
+    Object.keys(kwb).forEach(kw => {
+      res[kw] = {};
+      Object.keys(kwb[kw]).forEach(b => {
+        const arr = kwb[kw][b];
+        res[kw][b] = arr.reduce((a,c)=>a+c,0)/arr.length;
+      });
+    });
+    return res;
+  }
+  const todayAvg = calcAvg([todayStr]);
+  const prev7Avg = prev7.length ? calcAvg(prev7) : {};
+  const alerts = [];
+  [...new Set([...Object.keys(todayAvg), ...Object.keys(prev7Avg)])].forEach(kw => {
+    FOCUS.forEach(brand => {
+      const curr = todayAvg[kw]?.[brand] ?? null;
+      const prev = prev7Avg[kw]?.[brand] ?? null;
+      if (curr === null && prev === null) return;
+      let diff, type;
+      if (!prev || prev === 0) { if (curr > 0) { diff = curr; type = 'new'; } else return; }
+      else if (!curr || curr === 0) { diff = -prev; type = 'drop'; }
+      else { diff = curr - prev; if (Math.abs(diff) < THRESHOLD) return; type = diff > 0 ? 'up' : 'down'; }
+      alerts.push({ kw, brand, prev: prev||0, curr: curr||0, diff, type });
+    });
+  });
+
+  if (alerts.length === 0) {
+    document.getElementById('alert-table-wrap').innerHTML = '<div class="state-msg">유의미한 변동 없음 (±5%p 미만)</div>';
+  } else {
+    const sorted = alerts.sort((a,b) => Math.abs(b.diff) - Math.abs(a.diff));
+    document.getElementById('alert-table-wrap').innerHTML = `
+      <table>
+        <thead><tr><th>브랜드</th><th>키워드</th><th>7일 평균</th><th>오늘</th><th>변동</th></tr></thead>
+        <tbody>
+          ${sorted.map(a => {
+            const icon = a.type==='up'?'🔺':a.type==='down'?'🔻':a.type==='new'?'🆕':'⬜';
+            const badge = a.type==='up'||a.type==='new'?'delta-up':'delta-down';
+            const diffStr = `${a.diff>=0?'+':''}${a.diff.toFixed(1)}%p`;
+            return `<tr>
+              <td>${icon} <strong>${a.brand}</strong></td>
+              <td>${a.kw}</td>
+              <td style="color:var(--text-sub)">${a.prev.toFixed(1)}%</td>
+              <td>${a.curr.toFixed(1)}%</td>
+              <td><span class="${badge}">${diffStr}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+}
+
+function setStatus(state, msg) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  dot.className = state === 'ok' ? 'ok' : state === 'err' ? 'err' : '';
+  txt.textContent = state === 'loading' ? '불러오는 중...' : state === 'ok' ? '연결됨' : '연결 실패: ' + (msg||'');
+}
+</script>
+</body>
+</html>
